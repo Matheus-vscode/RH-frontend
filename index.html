@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Sistema RH</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <h1 class="logo">RH • Sistema</h1>
+      <input type="text" placeholder="Pesquisar funcionário..." id="search">
+      <nav>
+        <button onclick="showView('dashboard')">Dashboard</button>
+        <button onclick="showView('funcionarios')">Funcionários</button>
+        <button onclick="showView('ferias')">Férias / Atestados</button>
+      </nav>
+      <button class="add-btn" onclick="openModal()">+ Novo funcionário</button>
+      <div class="credits">
+        <p>👩‍💼 PO: Franciele</p>
+        <p>🧑‍💻 SM: Diego</p>
+        <p>👨‍🔧 Dev: Matheus</p>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main id="main">
+      <section id="dashboard" class="view">
+        <div class="card">Colaboradores: <span id="totalColab">0</span></div>
+        <div class="card">Em férias/afastados: <span id="totalAway">0</span></div>
+        <div class="card">Último acesso: <span id="ultimoAcesso"></span></div>
+      </section>
+
+      <section id="funcionarios" class="view hidden">
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th><th>CPF</th><th>Cargo</th><th>Departamento</th><th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="employeeTable"></tbody>
+        </table>
+      </section>
+
+      <section id="ferias" class="view hidden">
+        <ul id="awayList"></ul>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal hidden" id="employeeModal">
+    <div class="modal-content">
+      <h3>Novo Funcionário</h3>
+      <input type="text" id="name" placeholder="Nome">
+      <input type="text" id="cpf" placeholder="CPF">
+      <input type="text" id="role" placeholder="Cargo">
+      <input type="text" id="dept" placeholder="Departamento">
+      <input type="number" id="salary" placeholder="Salário">
+      <input type="date" id="adm">
+      <div class="modal-actions">
+        <button onclick="closeModal()">Cancelar</button>
+        <button onclick="saveEmployee()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
