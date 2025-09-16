@@ -2,54 +2,49 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sistema RH</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="app">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-      <h1 class="logo">RH • Sistema</h1>
-      <input type="text" placeholder="Pesquisar funcionário..." id="search" onkeyup="updateUI()">
-      <nav>
-        <button onclick="showView('dashboard')">Dashboard</button>
-        <button onclick="showView('funcionarios')">Funcionários</button>
-        <button onclick="showView('ferias')">Férias / Atestados</button>
-      </nav>
-      <button class="add-btn" onclick="openModal()">+ Novo funcionário</button>
-      <div class="credits">
-        <p>👩‍💼 PO: Franciele</p>
-        <p>🧑‍💻 SM: Diego</p>
-        <p>👨‍🔧 Dev: Matheus</p>
-      </div>
-    </aside>
-
-    <!-- Main -->
-    <main id="main">
-      <section id="dashboard" class="view">
-        <div class="card">Colaboradores: <span id="totalColab">0</span></div>
-        <div class="card">Em férias/afastados: <span id="totalAway">0</span></div>
-        <div class="card">Último acesso: <span id="ultimoAcesso"></span></div>
-      </section>
-
-      <section id="funcionarios" class="view hidden">
-        <table>
-          <thead>
-            <tr>
-              <th>Nome</th><th>CPF</th><th>Cargo</th><th>Departamento</th><th>Ações</th>
-            </tr>
-          </thead>
-          <tbody id="employeeTable"></tbody>
-        </table>
-      </section>
-
-      <section id="ferias" class="view hidden">
-        <ul id="awayList"></ul>
-      </section>
-    </main>
+  <div class="sidebar">
+    <h2>RH • Sistema</h2>
+    <input type="text" id="search" placeholder="Pesquisar funcionário..." oninput="updateUI()">
+    <button onclick="showSection('dashboard')">Dashboard</button>
+    <button onclick="showSection('employees')">Funcionários</button>
+    <button onclick="showSection('away')">Férias / Atestados</button>
+    <div class="footer">
+      <button class="btn-add" onclick="openModal()">+ Novo funcionário</button>
+      <p>👩‍💼 PO: Franciele</p>
+      <p>👨‍💼 SM: Diego</p>
+      <p>👨‍💻 Dev: Matheus</p>
+    </div>
   </div>
 
-  <!-- Modal -->
+  <div class="main">
+    <div id="dashboard" class="section">
+      <div class="card">Colaboradores: <span id="totalColab">0</span></div>
+      <div class="card">Em férias/afastados: <span id="totalAway">0</span></div>
+      <div class="card">Último acesso: <span id="ultimoAcesso"></span></div>
+    </div>
+
+    <div id="employees" class="section hidden">
+      <h3>Funcionários</h3>
+      <table>
+        <thead>
+          <tr><th>Nome</th><th>CPF</th><th>Cargo</th><th>Departamento</th><th>Ações</th></tr>
+        </thead>
+        <tbody id="employeeTable"></tbody>
+      </table>
+    </div>
+
+    <div id="away" class="section hidden">
+      <h3>Férias / Afastamentos</h3>
+      <ul id="awayList"></ul>
+    </div>
+  </div>
+
+  <!-- Modal Funcionário -->
   <div class="modal hidden" id="employeeModal">
     <div class="modal-content">
       <h3 id="modalTitle">Novo Funcionário</h3>
@@ -66,7 +61,7 @@
     </div>
   </div>
 
-  <!-- Modal de afastamento -->
+  <!-- Modal Afastamento -->
   <div class="modal hidden" id="awayModal">
     <div class="modal-content">
       <h3 id="awayModalTitle">Registrar Afastamento</h3>
@@ -82,8 +77,7 @@
     </div>
   </div>
 
-
+  <!-- ⚡ Ligação com o JS -->
   <script src="script.js"></script>
 </body>
 </html>
-
