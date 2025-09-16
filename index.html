@@ -49,22 +49,22 @@
     </main>
   </div>
 
-  <!-- Modal -->
-  <div class="modal hidden" id="employeeModal">
+   <!-- Modal de afastamento -->
+  <div class="modal hidden" id="awayModal">
     <div class="modal-content">
-      <h3 id="modalTitle">Novo Funcionário</h3>
-      <input type="text" id="name" placeholder="Nome">
-      <input type="text" id="cpf" placeholder="CPF">
-      <input type="text" id="role" placeholder="Cargo">
-      <input type="text" id="dept" placeholder="Departamento">
-      <input type="number" id="salary" placeholder="Salário">
-      <input type="date" id="adm">
+      <h3 id="awayModalTitle">Registrar Afastamento</h3>
+      <input type="text" id="awayReason" placeholder="Motivo (ex: Férias, Atestado)">
+      <label>Data início:</label>
+      <input type="date" id="awayFrom">
+      <label>Data fim:</label>
+      <input type="date" id="awayTo">
       <div class="modal-actions">
-        <button onclick="closeModal()">Cancelar</button>
-        <button onclick="saveEmployee()">Salvar</button>
+        <button onclick="closeAwayModal()">Cancelar</button>
+        <button onclick="saveAway()">Salvar</button>
       </div>
     </div>
   </div>
+
 
   <script src="script.js"></script>
 </body>
