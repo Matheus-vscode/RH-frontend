@@ -1,9 +1,13 @@
 let employees = JSON.parse(localStorage.getItem("employees") || "[]");
 let away = JSON.parse(localStorage.getItem("away") || "[]");
 let editId = null;
-let awayEmpId = null; // <- guarda o funcionário em afastamento
 
-// ---- Modal Funcionário (já estava pronto) ----
+function showView(view) {
+  document.querySelectorAll(".view").forEach(v => v.classList.add("hidden"));
+  document.getElementById(view).classList.remove("hidden");
+  updateUI();
+}
+
 function openModal(emp = null) {
   document.getElementById("employeeModal").classList.remove("hidden");
   if (emp) {
@@ -26,40 +30,33 @@ function closeModal() {
   document.getElementById("employeeModal").classList.add("hidden");
 }
 
-// ---- Modal de afastamento ----
-function openAwayModal(empId) {
-  awayEmpId = empId;
-  document.getElementById("awayModal").classList.remove("hidden");
-  document.getElementById("awayReason").value = "";
-  document.getElementById("awayFrom").value = new Date().toISOString().slice(0,10);
-  document.getElementById("awayTo").value = "";
-}
+function saveEmployee() {
+  const emp = {
+    id: editId || Date.now(),
+    name: document.getElementById("name").value,
+    cpf: document.getElementById("cpf").value,
+    role: document.getElementById("role").value,
+    dept: document.getElementById("dept").value,
+    salary: document.getElementById("salary").value,
+    adm: document.getElementById("adm").value
+  };
 
-function closeAwayModal() {
-  document.getElementById("awayModal").classList.add("hidden");
-  awayEmpId = null;
-}
-
-function saveAway() {
-  if (!awayEmpId) return;
-
-  const reason = document.getElementById("awayReason").value;
-  const from = document.getElementById("awayFrom").value;
-  const to = document.getElementById("awayTo").value;
-
-  if (!reason || !from) {
-    alert("Motivo e data de início são obrigatórios!");
+  if (!emp.name || !emp.cpf) {
+    alert("Nome e CPF são obrigatórios!");
     return;
   }
 
-  away.push({ id: Date.now(), empId: awayEmpId, reason, from, to });
-  localStorage.setItem("away", JSON.stringify(away));
+  if (editId) {
+    employees = employees.map(e => e.id === editId ? emp : e);
+  } else {
+    employees.push(emp);
+  }
 
+  localStorage.setItem("employees", JSON.stringify(employees));
   updateUI();
-  closeAwayModal();
+  closeModal();
 }
 
-// ---- Botões de ações (ajustado) ----
 function removeEmployee(id) {
   if (confirm("Deseja remover este funcionário?")) {
     employees = employees.filter(e => e.id !== id);
@@ -69,7 +66,13 @@ function removeEmployee(id) {
 }
 
 function registerAway(id) {
-  openAwayModal(id);
+  const reason = prompt("Motivo do afastamento:", "Férias");
+  if (!reason) return;
+  const from = prompt("Data início (AAAA-MM-DD):", new Date().toISOString().slice(0,10));
+  const to = prompt("Data fim (AAAA-MM-DD):", "");
+  away.push({ id: Date.now(), empId: id, reason, from, to });
+  localStorage.setItem("away", JSON.stringify(away));
+  updateUI();
 }
 
 function removeAway(id) {
@@ -78,14 +81,16 @@ function removeAway(id) {
   updateUI();
 }
 
-// ---- updateUI (igual, só mudou chamada do botão afastar) ----
 function updateUI() {
+  // Dashboard
   document.getElementById("totalColab").innerText = employees.length;
   document.getElementById("totalAway").innerText = away.length;
   document.getElementById("ultimoAcesso").innerText = new Date().toLocaleDateString("pt-BR");
 
+  // Pesquisa
   const search = document.getElementById("search").value.toLowerCase();
 
+  // Funcionários
   const tbody = document.getElementById("employeeTable");
   tbody.innerHTML = "";
   employees
@@ -98,13 +103,14 @@ function updateUI() {
         <td>${e.role}</td>
         <td>${e.dept}</td>
         <td>
-          <button onclick='openModal(${JSON.stringify(e).replace(/"/g, "&quot;")})'>Editar</button>
+          <button onclick="openModal(${JSON.stringify(e).replace(/"/g, '&quot;')})">Editar</button>
           <button onclick="removeEmployee(${e.id})">Remover</button>
           <button onclick="registerAway(${e.id})">Afastar</button>
         </td>`;
       tbody.appendChild(tr);
     });
 
+  // Lista de afastamentos
   const ul = document.getElementById("awayList");
   ul.innerHTML = "";
   away.forEach(a => {
