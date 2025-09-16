@@ -1,10 +1,14 @@
-
 let employees = JSON.parse(localStorage.getItem("employees") || "[]");
 let away = JSON.parse(localStorage.getItem("away") || "[]");
 let editId = null;
-let awayEmpId = null; // <- guarda o funcionário em afastamento
+let awayEmpId = null;
 
-// ---- Modal Funcionário (já estava pronto) ----
+function showSection(id) {
+  document.querySelectorAll(".section").forEach(s => s.classList.add("hidden"));
+  document.getElementById(id).classList.remove("hidden");
+}
+
+// --------- Funcionários ----------
 function openModal(emp = null) {
   document.getElementById("employeeModal").classList.remove("hidden");
   if (emp) {
@@ -27,7 +31,39 @@ function closeModal() {
   document.getElementById("employeeModal").classList.add("hidden");
 }
 
-// ---- Modal de afastamento ----
+function saveEmployee() {
+  const name = document.getElementById("name").value;
+  const cpf = document.getElementById("cpf").value;
+  const role = document.getElementById("role").value;
+  const dept = document.getElementById("dept").value;
+  const salary = document.getElementById("salary").value;
+  const adm = document.getElementById("adm").value;
+
+  if (!name || !cpf || !role || !dept) {
+    alert("Preencha todos os campos obrigatórios!");
+    return;
+  }
+
+  if (editId) {
+    employees = employees.map(e => e.id === editId ? {id: editId, name, cpf, role, dept, salary, adm} : e);
+  } else {
+    employees.push({ id: Date.now(), name, cpf, role, dept, salary, adm });
+  }
+
+  localStorage.setItem("employees", JSON.stringify(employees));
+  closeModal();
+  updateUI();
+}
+
+function removeEmployee(id) {
+  if (confirm("Deseja remover este funcionário?")) {
+    employees = employees.filter(e => e.id !== id);
+    localStorage.setItem("employees", JSON.stringify(employees));
+    updateUI();
+  }
+}
+
+// --------- Afastamentos ----------
 function openAwayModal(empId) {
   awayEmpId = empId;
   document.getElementById("awayModal").classList.remove("hidden");
@@ -38,12 +74,9 @@ function openAwayModal(empId) {
 
 function closeAwayModal() {
   document.getElementById("awayModal").classList.add("hidden");
-  awayEmpId = null;
 }
 
 function saveAway() {
-  if (!awayEmpId) return;
-
   const reason = document.getElementById("awayReason").value;
   const from = document.getElementById("awayFrom").value;
   const to = document.getElementById("awayTo").value;
@@ -55,22 +88,8 @@ function saveAway() {
 
   away.push({ id: Date.now(), empId: awayEmpId, reason, from, to });
   localStorage.setItem("away", JSON.stringify(away));
-
-  updateUI();
   closeAwayModal();
-}
-
-// ---- Botões de ações (ajustado) ----
-function removeEmployee(id) {
-  if (confirm("Deseja remover este funcionário?")) {
-    employees = employees.filter(e => e.id !== id);
-    localStorage.setItem("employees", JSON.stringify(employees));
-    updateUI();
-  }
-}
-
-function registerAway(id) {
-  openAwayModal(id);
+  updateUI();
 }
 
 function removeAway(id) {
@@ -79,16 +98,16 @@ function removeAway(id) {
   updateUI();
 }
 
-// ---- updateUI (igual, só mudou chamada do botão afastar) ----
+// --------- Atualizar Tela ----------
 function updateUI() {
   document.getElementById("totalColab").innerText = employees.length;
   document.getElementById("totalAway").innerText = away.length;
   document.getElementById("ultimoAcesso").innerText = new Date().toLocaleDateString("pt-BR");
 
   const search = document.getElementById("search").value.toLowerCase();
-
   const tbody = document.getElementById("employeeTable");
   tbody.innerHTML = "";
+
   employees
     .filter(e => e.name.toLowerCase().includes(search))
     .forEach(e => {
@@ -101,7 +120,7 @@ function updateUI() {
         <td>
           <button onclick='openModal(${JSON.stringify(e).replace(/"/g, "&quot;")})'>Editar</button>
           <button onclick="removeEmployee(${e.id})">Remover</button>
-          <button onclick="registerAway(${e.id})">Afastar</button>
+          <button onclick="openAwayModal(${e.id})">Afastar</button>
         </td>`;
       tbody.appendChild(tr);
     });
