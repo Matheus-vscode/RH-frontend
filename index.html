@@ -2,106 +2,267 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema RH</title>
+  <title>RH • Sistema</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f4f6f9;
       margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #f1f5f9;
+      display: flex;
+      min-height: 100vh;
+    }
+    aside {
+      width: 250px;
       padding: 20px;
+      border-right: 1px solid #1e293b;
+      background: #1e293b;
+      display: flex;
+      flex-direction: column;
     }
-    h1 {
-      text-align: center;
-      color: #333;
+    aside h1 { color: #22d3ee; }
+    aside input {
+      padding: 8px;
+      margin: 10px 0;
+      border-radius: 6px;
+      border: none;
+      background: #0f172a;
+      color: white;
     }
-    .btn {
-      padding: 10px 20px;
-      background: #4f46e5;
-      color: #fff;
+    aside button {
+      margin-top: 5px;
+      padding: 10px;
       border: none;
       border-radius: 8px;
+      background: #22d3ee;
+      color: white;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    aside button:hover { background: #0ea5e9; }
+    main {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .card {
+      background: #1e293b;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      padding: 8px;
+      border-bottom: 1px solid #334155;
+    }
+    tr:hover { background: #334155; }
+    .actions button {
+      margin-right: 5px;
+      padding: 5px 10px;
+      border-radius: 5px;
+      border: none;
       cursor: pointer;
     }
-    .btn:hover {
-      background: #4338ca;
-    }
+    .edit { background: #0ea5e9; color: white; }
+    .delete { background: #ef4444; color: white; }
+    .away { background: #22c55e; color: white; }
+    /* Modal */
     .modal {
       display: none;
       position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
+      inset: 0;
       background: rgba(0,0,0,0.6);
       justify-content: center;
       align-items: center;
     }
     .modal-content {
-      background: #fff;
+      background: #1e293b;
       padding: 20px;
-      border-radius: 10px;
-      width: 300px;
+      border-radius: 12px;
+      width: 400px;
     }
-    table {
+    .modal-content input {
       width: 100%;
-      margin-top: 20px;
-      border-collapse: collapse;
+      padding: 8px;
+      margin: 5px 0;
+      border-radius: 6px;
+      border: none;
+      background: #0f172a;
+      color: white;
     }
-    th, td {
-      padding: 10px;
-      border: 1px solid #ddd;
-      text-align: center;
+    .modal-content .buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 10px;
     }
+    .cancel { background: #475569; color: white; }
+    .save { background: #22d3ee; color: white; }
   </style>
 </head>
 <body>
-  <h1>Cadastro de Funcionários</h1>
-  
-  <button class="btn" id="openModal">Adicionar Funcionário</button>
-  
+  <!-- Sidebar -->
+  <aside>
+    <h1>RH • Sistema</h1>
+    <input type="text" id="search" placeholder="Pesquisar funcionário...">
+    <button onclick="showView('dashboard')">Dashboard</button>
+    <button onclick="showView('funcionarios')">Funcionários</button>
+    <button onclick="showView('ferias')">Férias / Afastamentos</button>
+    <button onclick="openModal()">+ Novo funcionário</button>
+  </aside>
+
+  <!-- Main -->
+  <main id="content">
+    <!-- Conteúdo dinâmico aqui -->
+  </main>
+
   <!-- Modal -->
-  <div class="modal" id="modal">
+  <div class="modal" id="employeeModal">
     <div class="modal-content">
-      <h2>Novo Funcionário</h2>
-      <input type="text" id="nome" placeholder="Nome"><br><br>
-      <input type="text" id="cpf" placeholder="CPF"><br><br>
-      <button class="btn" id="salvar">Salvar</button>
-      <button class="btn" id="fechar">Cancelar</button>
+      <h3 id="modalTitle">Novo Funcionário</h3>
+      <input id="empName" placeholder="Nome">
+      <input id="empCpf" placeholder="CPF">
+      <input id="empRole" placeholder="Cargo">
+      <input id="empDept" placeholder="Departamento">
+      <input id="empSalary" type="number" placeholder="Salário">
+      <input id="empAdm" type="date" placeholder="Data admissão">
+      <div class="buttons">
+        <button class="cancel" onclick="closeModal()">Cancelar</button>
+        <button class="save" onclick="saveEmployee()">Salvar</button>
+      </div>
     </div>
   </div>
-  
-  <!-- Tabela -->
-  <table>
-    <thead>
-      <tr>
-        <th>Nome</th>
-        <th>CPF</th>
-      </tr>
-    </thead>
-    <tbody id="lista"></tbody>
-  </table>
-  
+
   <script>
-    const openModal = document.getElementById("openModal");
-    const modal = document.getElementById("modal");
-    const fechar = document.getElementById("fechar");
-    const salvar = document.getElementById("salvar");
-    const lista = document.getElementById("lista");
+    let view = "dashboard";
+    let employees = [];
+    let away = [];
+    let editingId = null;
 
-    openModal.onclick = () => modal.style.display = "flex";
-    fechar.onclick = () => modal.style.display = "none";
+    function showView(v) {
+      view = v;
+      render();
+    }
 
-    salvar.onclick = () => {
-      const nome = document.getElementById("nome").value;
-      const cpf = document.getElementById("cpf").value;
-
-      if(nome && cpf) {
-        const row = `<tr><td>${nome}</td><td>${cpf}</td></tr>`;
-        lista.innerHTML += row;
-        modal.style.display = "none";
-      } else {
-        alert("Preencha todos os campos!");
+    function render() {
+      const content = document.getElementById("content");
+      if (view === "dashboard") {
+        content.innerHTML = `
+          <div class="card"><p>Colaboradores: <b>${employees.length}</b></p></div>
+          <div class="card"><p>Em férias/afastados: <b>${away.length}</b></p></div>
+          <div class="card"><p>Último acesso: <b>${new Date().toLocaleDateString("pt-BR")}</b></p></div>
+        `;
       }
-    };
+      if (view === "funcionarios") {
+        content.innerHTML = `
+          <table>
+            <thead><tr><th>Nome</th><th>CPF</th><th>Cargo</th><th>Depto</th><th>Ações</th></tr></thead>
+            <tbody>
+              ${employees.map(e => `
+                <tr>
+                  <td>${e.name}</td>
+                  <td>${e.cpf}</td>
+                  <td>${e.role}</td>
+                  <td>${e.dept}</td>
+                  <td class="actions">
+                    <button class="edit" onclick="editEmployee(${e.id})">Editar</button>
+                    <button class="delete" onclick="deleteEmployee(${e.id})">Remover</button>
+                    <button class="away" onclick="registerAway(${e.id})">Afastar</button>
+                  </td>
+                </tr>`).join("")}
+            </tbody>
+          </table>
+        `;
+      }
+      if (view === "ferias") {
+        content.innerHTML = `
+          <div>
+            ${away.length === 0 ? "<p>Nenhum afastamento.</p>" : away.map(a => {
+              const emp = employees.find(e => e.id === a.empId);
+              return `<div class="card">
+                <p><b>${emp?.name || "Ex-funcionário"}</b></p>
+                <p>${a.reason} — ${a.fromDate} ${a.toDate ? "até " + a.toDate : ""}</p>
+                <button class="delete" onclick="removeAway(${a.id})">Remover</button>
+              </div>`;
+            }).join("")}
+          </div>
+        `;
+      }
+    }
+
+    function openModal() {
+      document.getElementById("employeeModal").style.display = "flex";
+    }
+    function closeModal() {
+      document.getElementById("employeeModal").style.display = "none";
+      clearForm();
+    }
+    function clearForm() {
+      editingId = null;
+      document.getElementById("empName").value = "";
+      document.getElementById("empCpf").value = "";
+      document.getElementById("empRole").value = "";
+      document.getElementById("empDept").value = "";
+      document.getElementById("empSalary").value = "";
+      document.getElementById("empAdm").value = "";
+      document.getElementById("modalTitle").innerText = "Novo Funcionário";
+    }
+    function saveEmployee() {
+      const emp = {
+        id: editingId || Date.now(),
+        name: document.getElementById("empName").value,
+        cpf: document.getElementById("empCpf").value,
+        role: document.getElementById("empRole").value,
+        dept: document.getElementById("empDept").value,
+        salary: document.getElementById("empSalary").value,
+        adm: document.getElementById("empAdm").value,
+      };
+      if (editingId) {
+        employees = employees.map(e => e.id === editingId ? emp : e);
+      } else {
+        employees.push(emp);
+      }
+      closeModal();
+      render();
+    }
+    function editEmployee(id) {
+      const emp = employees.find(e => e.id === id);
+      if (!emp) return;
+      editingId = id;
+      document.getElementById("modalTitle").innerText = "Editar Funcionário";
+      document.getElementById("empName").value = emp.name;
+      document.getElementById("empCpf").value = emp.cpf;
+      document.getElementById("empRole").value = emp.role;
+      document.getElementById("empDept").value = emp.dept;
+      document.getElementById("empSalary").value = emp.salary;
+      document.getElementById("empAdm").value = emp.adm;
+      openModal();
+    }
+    function deleteEmployee(id) {
+      if (!confirm("Remover funcionário?")) return;
+      employees = employees.filter(e => e.id !== id);
+      away = away.filter(a => a.empId !== id);
+      render();
+    }
+    function registerAway(empId) {
+      const fromDate = prompt("Data início (YYYY-MM-DD):", new Date().toISOString().slice(0, 10));
+      if (!fromDate) return;
+      const toDate = prompt("Data fim (opcional):", "");
+      const reason = prompt("Motivo/CID:", "Atestado");
+      away.push({ id: Date.now(), empId, fromDate, toDate, reason });
+      render();
+    }
+    function removeAway(id) {
+      away = away.filter(a => a.id !== id);
+      render();
+    }
+
+    render();
   </script>
 </body>
 </html>
