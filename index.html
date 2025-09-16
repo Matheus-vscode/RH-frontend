@@ -66,6 +66,23 @@
     </div>
   </div>
 
+  <!-- Modal de afastamento -->
+  <div class="modal hidden" id="awayModal">
+    <div class="modal-content">
+      <h3 id="awayModalTitle">Registrar Afastamento</h3>
+      <input type="text" id="awayReason" placeholder="Motivo (ex: Férias, Atestado)">
+      <label>Data início:</label>
+      <input type="date" id="awayFrom">
+      <label>Data fim:</label>
+      <input type="date" id="awayTo">
+      <div class="modal-actions">
+        <button onclick="closeAwayModal()">Cancelar</button>
+        <button onclick="saveAway()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+
   <script src="script.js"></script>
 </body>
 </html>
