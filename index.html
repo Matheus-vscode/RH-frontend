@@ -10,7 +10,7 @@
     <!-- Sidebar -->
     <aside class="sidebar">
       <h1 class="logo">RH • Sistema</h1>
-      <input type="text" placeholder="Pesquisar funcionário..." id="search">
+      <input type="text" placeholder="Pesquisar funcionário..." id="search" onkeyup="updateUI()">
       <nav>
         <button onclick="showView('dashboard')">Dashboard</button>
         <button onclick="showView('funcionarios')">Funcionários</button>
@@ -52,7 +52,7 @@
   <!-- Modal -->
   <div class="modal hidden" id="employeeModal">
     <div class="modal-content">
-      <h3>Novo Funcionário</h3>
+      <h3 id="modalTitle">Novo Funcionário</h3>
       <input type="text" id="name" placeholder="Nome">
       <input type="text" id="cpf" placeholder="CPF">
       <input type="text" id="role" placeholder="Cargo">
