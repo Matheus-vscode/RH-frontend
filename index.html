@@ -189,12 +189,12 @@ function App() {
   const [formData,setFormData]=useState({id:"",name:"",cpf:"",role:"",dept:"",salary:"",adm:""});
 
   // Fetch
-  const fetchData=async()=>{
-    try{
-      const empRes=await fetch("http://localhost:3001/employees");
-      const empData=await empRes.json();
-      setEmployees(empData);
-
+  
+const fetchData = async () => {
+  const empRes = await fetch("http://localhost:3001/employees");
+  const empData = await empRes.json();
+  setEmployees(empData);
+};
       const awayRes=await fetch("http://localhost:3001/employees/away");
       const awayData=await awayRes.json();
       setAway(awayData);
