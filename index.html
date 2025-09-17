@@ -2,267 +2,362 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>RH • Sistema</title>
+  <title>Sistema RH</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #0f172a;
-      color: #f1f5f9;
-      display: flex;
-      min-height: 100vh;
-    }
-    aside {
-      width: 250px;
-      padding: 20px;
-      border-right: 1px solid #1e293b;
-      background: #1e293b;
-      display: flex;
-      flex-direction: column;
-    }
-    aside h1 { color: #22d3ee; }
-    aside input {
-      padding: 8px;
-      margin: 10px 0;
-      border-radius: 6px;
-      border: none;
-      background: #0f172a;
-      color: white;
-    }
-    aside button {
-      margin-top: 5px;
-      padding: 10px;
-      border: none;
-      border-radius: 8px;
-      background: #22d3ee;
-      color: white;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-    aside button:hover { background: #0ea5e9; }
-    main {
-      flex: 1;
-      padding: 20px;
-      overflow-y: auto;
-    }
-    .card {
-      background: #1e293b;
-      padding: 20px;
-      border-radius: 12px;
-      margin-bottom: 15px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
-    th, td {
-      padding: 8px;
-      border-bottom: 1px solid #334155;
-    }
-    tr:hover { background: #334155; }
-    .actions button {
-      margin-right: 5px;
-      padding: 5px 10px;
-      border-radius: 5px;
-      border: none;
-      cursor: pointer;
-    }
-    .edit { background: #0ea5e9; color: white; }
-    .delete { background: #ef4444; color: white; }
-    .away { background: #22c55e; color: white; }
-    /* Modal */
-    .modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.6);
-      justify-content: center;
-      align-items: center;
-    }
-    .modal-content {
-      background: #1e293b;
-      padding: 20px;
-      border-radius: 12px;
-      width: 400px;
-    }
-    .modal-content input {
-      width: 100%;
-      padding: 8px;
-      margin: 5px 0;
-      border-radius: 6px;
-      border: none;
-      background: #0f172a;
-      color: white;
-    }
-    .modal-content .buttons {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-      margin-top: 10px;
-    }
-    .cancel { background: #475569; color: white; }
-    .save { background: #22d3ee; color: white; }
+    body { margin: 0; }
   </style>
 </head>
 <body>
-  <!-- Sidebar -->
-  <aside>
-    <h1>RH • Sistema</h1>
-    <input type="text" id="search" placeholder="Pesquisar funcionário...">
-    <button onclick="showView('dashboard')">Dashboard</button>
-    <button onclick="showView('funcionarios')">Funcionários</button>
-    <button onclick="showView('ferias')">Férias / Afastamentos</button>
-    <button onclick="openModal()">+ Novo funcionário</button>
-  </aside>
+  <div id="root"></div>
 
-  <!-- Main -->
-  <main id="content">
-    <!-- Conteúdo dinâmico aqui -->
-  </main>
+  <!-- React e ReactDOM via CDN -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-  <!-- Modal -->
-  <div class="modal" id="employeeModal">
-    <div class="modal-content">
-      <h3 id="modalTitle">Novo Funcionário</h3>
-      <input id="empName" placeholder="Nome">
-      <input id="empCpf" placeholder="CPF">
-      <input id="empRole" placeholder="Cargo">
-      <input id="empDept" placeholder="Departamento">
-      <input id="empSalary" type="number" placeholder="Salário">
-      <input id="empAdm" type="date" placeholder="Data admissão">
-      <div class="buttons">
-        <button class="cancel" onclick="closeModal()">Cancelar</button>
-        <button class="save" onclick="saveEmployee()">Salvar</button>
-      </div>
-    </div>
-  </div>
+  <script type="text/babel">
+    const { useState, useEffect } = React;
 
-  <script>
-    let view = "dashboard";
-    let employees = [];
-    let away = [];
-    let editingId = null;
-
-    function showView(v) {
-      view = v;
-      render();
+    // ================== Sidebar ==================
+    function Sidebar({ view, setView, search, setSearch, onAdd }) {
+      return (
+        <aside className="w-64 p-4 border-r border-slate-800 flex flex-col bg-slate-900">
+          <h1 className="text-2xl font-bold text-cyan-400 mb-6">RH • Sistema</h1>
+          <input
+            type="text"
+            placeholder="Pesquisar funcionário..."
+            className="w-full mb-4 px-3 py-2 rounded-lg bg-slate-800 text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <nav className="flex flex-col gap-2 mb-6">
+            {["dashboard", "funcionarios", "ferias", "cipa"].map((v) => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                className={`text-left px-3 py-2 rounded-lg transition ${
+                  view === v
+                    ? "bg-cyan-600 text-white font-semibold"
+                    : "text-slate-400 hover:text-white hover:bg-slate-700"
+                }`}
+              >
+                {v === "dashboard" && "Dashboard"}
+                {v === "funcionarios" && "Funcionários"}
+                {v === "ferias" && "Férias / Afastamentos"}
+                {v === "cipa" && "Relatório CIPA"}
+              </button>
+            ))}
+          </nav>
+          <button
+            className="mt-auto w-full bg-gradient-to-r from-cyan-500 to-purple-600 text-white py-2 rounded-xl hover:scale-105 transition"
+            onClick={onAdd}
+          >
+            + Novo funcionário
+          </button>
+          <div className="mt-6 text-sm text-slate-400">
+            <p>👩‍💼 PO: Franciele</p>
+            <p>🧑‍💻 SM: Diego</p>
+            <p>👨‍🔧 Dev: Matheus</p>
+          </div>
+        </aside>
+      );
     }
 
-    function render() {
-      const content = document.getElementById("content");
-      if (view === "dashboard") {
-        content.innerHTML = `
-          <div class="card"><p>Colaboradores: <b>${employees.length}</b></p></div>
-          <div class="card"><p>Em férias/afastados: <b>${away.length}</b></p></div>
-          <div class="card"><p>Último acesso: <b>${new Date().toLocaleDateString("pt-BR")}</b></p></div>
-        `;
+    // ================== Dashboard ==================
+    function Dashboard({ employees, currentAway }) {
+      return (
+        <div className="grid md:grid-cols-3 gap-4">
+          <div className="bg-slate-800 p-6 rounded-2xl shadow-lg">
+            <p className="text-slate-400">Colaboradores</p>
+            <p className="text-3xl font-bold">{employees.length}</p>
+          </div>
+          <div className="bg-slate-800 p-6 rounded-2xl shadow-lg">
+            <p className="text-slate-400">Em férias/afastados</p>
+            <p className="text-3xl font-bold">{currentAway.length}</p>
+          </div>
+          <div className="bg-slate-800 p-6 rounded-2xl shadow-lg">
+            <p className="text-slate-400">Último acesso</p>
+            <p className="text-lg">{new Date().toLocaleDateString("pt-BR")}</p>
+          </div>
+        </div>
+      );
+    }
+
+    // ================== Employees Table ==================
+    function Employees({ filteredEmployees, onEdit, onDelete, onAway }) {
+      return filteredEmployees.length === 0 ? (
+        <p className="text-slate-400">Nenhum funcionário cadastrado.</p>
+      ) : (
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="border-b border-slate-700">
+              <th className="p-2">Nome</th>
+              <th className="p-2">CPF</th>
+              <th className="p-2">Cargo</th>
+              <th className="p-2">Departamento</th>
+              <th className="p-2">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredEmployees.map((e) => (
+              <tr key={e.id} className="border-b border-slate-800 hover:bg-slate-700 transition">
+                <td className="p-2">{e.name}</td>
+                <td className="p-2">{e.cpf}</td>
+                <td className="p-2">{e.role}</td>
+                <td className="p-2">{e.dept}</td>
+                <td className="p-2 flex gap-2">
+                  <button
+                    className="px-3 py-1 bg-slate-700 rounded hover:bg-cyan-600 transition"
+                    onClick={() => onEdit(e)}
+                  >
+                    Editar
+                  </button>
+                  <button
+                    className="px-3 py-1 bg-red-600 rounded hover:bg-red-500 transition"
+                    onClick={() => onDelete(e.id)}
+                  >
+                    Remover
+                  </button>
+                  <button
+                    className="px-3 py-1 bg-cyan-600 rounded hover:bg-cyan-500 transition"
+                    onClick={() => onAway(e.id)}
+                  >
+                    Afastar
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+    }
+
+    // ================== Away List ==================
+    function AwayList({ away, employees, onRemove }) {
+      return away.length === 0 ? (
+        <p className="text-slate-400">Nenhum afastamento registrado.</p>
+      ) : (
+        <ul className="space-y-2">
+          {away.map((a) => {
+            const emp = employees.find((e) => e.id === a.empId);
+            return (
+              <li
+                key={a.id}
+                className="bg-slate-800 p-4 rounded-xl flex justify-between items-center shadow-md"
+              >
+                <div>
+                  <p className="font-semibold">{emp?.name || "[Ex-funcionário]"}</p>
+                  <p className="text-slate-400 text-sm">
+                    {a.reason} — {a.fromDate} {a.toDate ? até ${a.toDate} : ""}
+                  </p>
+                </div>
+                <button
+                  className="px-3 py-1 bg-red-600 rounded hover:bg-red-500 transition"
+                  onClick={() => onRemove(a.id)}
+                >
+                  Remover
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      );
+    }
+
+    // ================== CIPA Report ==================
+    function CipaReport({ away }) {
+      if (away.length === 0)
+        return <p className="text-slate-400">Nenhum afastamento registrado.</p>;
+
+      const stats = away.reduce((acc, a) => {
+        acc[a.reason] = (acc[a.reason] || 0) + 1;
+        return acc;
+      }, {});
+
+      const alertas = [];
+      for (const cid in stats) {
+        if (cid.toLowerCase().includes("depress") || cid.toLowerCase().includes("f32")) {
+          alertas.push("⚠ Muitos afastamentos por problemas psicológicos.");
+        }
+        if (cid.toLowerCase().includes("acidente") || cid.toLowerCase().includes("s72")) {
+          alertas.push("⚠ Reincidência de acidentes de trabalho.");
+        }
       }
-      if (view === "funcionarios") {
-        content.innerHTML = `
-          <table>
-            <thead><tr><th>Nome</th><th>CPF</th><th>Cargo</th><th>Depto</th><th>Ações</th></tr></thead>
+
+      return (
+        <div className="space-y-4">
+          <h2 className="text-xl font-bold">Relatório para CIPA</h2>
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="border-b border-slate-700">
+                <th className="p-2">CID/Motivo</th>
+                <th className="p-2">Quantidade</th>
+              </tr>
+            </thead>
             <tbody>
-              ${employees.map(e => `
-                <tr>
-                  <td>${e.name}</td>
-                  <td>${e.cpf}</td>
-                  <td>${e.role}</td>
-                  <td>${e.dept}</td>
-                  <td class="actions">
-                    <button class="edit" onclick="editEmployee(${e.id})">Editar</button>
-                    <button class="delete" onclick="deleteEmployee(${e.id})">Remover</button>
-                    <button class="away" onclick="registerAway(${e.id})">Afastar</button>
-                  </td>
-                </tr>`).join("")}
+              {Object.entries(stats).map(([cid, qtd]) => (
+                <tr key={cid} className="border-b border-slate-800">
+                  <td className="p-2">{cid}</td>
+                  <td className="p-2">{qtd}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
-        `;
-      }
-      if (view === "ferias") {
-        content.innerHTML = `
-          <div>
-            ${away.length === 0 ? "<p>Nenhum afastamento.</p>" : away.map(a => {
-              const emp = employees.find(e => e.id === a.empId);
-              return `<div class="card">
-                <p><b>${emp?.name || "Ex-funcionário"}</b></p>
-                <p>${a.reason} — ${a.fromDate} ${a.toDate ? "até " + a.toDate : ""}</p>
-                <button class="delete" onclick="removeAway(${a.id})">Remover</button>
-              </div>`;
-            }).join("")}
-          </div>
-        `;
-      }
+
+          {alertas.length > 0 && (
+            <div className="bg-red-600/20 border border-red-500 rounded-lg p-4 text-red-300">
+              <h3 className="font-bold">⚠ Recomendações:</h3>
+              <ul className="list-disc pl-5">
+                {alertas.map((a, i) => (
+                  <li key={i}>{a}</li>
+                ))}
+              </ul>
+              <p className="mt-2">
+                👉 Encaminhar ao RH e CIPA para análise. Considerar palestras, apoio psicológico e revisão de segurança.
+              </p>
+            </div>
+          )}
+        </div>
+      );
     }
 
-    function openModal() {
-      document.getElementById("employeeModal").style.display = "flex";
-    }
-    function closeModal() {
-      document.getElementById("employeeModal").style.display = "none";
-      clearForm();
-    }
-    function clearForm() {
-      editingId = null;
-      document.getElementById("empName").value = "";
-      document.getElementById("empCpf").value = "";
-      document.getElementById("empRole").value = "";
-      document.getElementById("empDept").value = "";
-      document.getElementById("empSalary").value = "";
-      document.getElementById("empAdm").value = "";
-      document.getElementById("modalTitle").innerText = "Novo Funcionário";
-    }
-    function saveEmployee() {
-      const emp = {
-        id: editingId || Date.now(),
-        name: document.getElementById("empName").value,
-        cpf: document.getElementById("empCpf").value,
-        role: document.getElementById("empRole").value,
-        dept: document.getElementById("empDept").value,
-        salary: document.getElementById("empSalary").value,
-        adm: document.getElementById("empAdm").value,
-      };
-      if (editingId) {
-        employees = employees.map(e => e.id === editingId ? emp : e);
-      } else {
-        employees.push(emp);
-      }
-      closeModal();
-      render();
-    }
-    function editEmployee(id) {
-      const emp = employees.find(e => e.id === id);
-      if (!emp) return;
-      editingId = id;
-      document.getElementById("modalTitle").innerText = "Editar Funcionário";
-      document.getElementById("empName").value = emp.name;
-      document.getElementById("empCpf").value = emp.cpf;
-      document.getElementById("empRole").value = emp.role;
-      document.getElementById("empDept").value = emp.dept;
-      document.getElementById("empSalary").value = emp.salary;
-      document.getElementById("empAdm").value = emp.adm;
-      openModal();
-    }
-    function deleteEmployee(id) {
-      if (!confirm("Remover funcionário?")) return;
-      employees = employees.filter(e => e.id !== id);
-      away = away.filter(a => a.empId !== id);
-      render();
-    }
-    function registerAway(empId) {
-      const fromDate = prompt("Data início (YYYY-MM-DD):", new Date().toISOString().slice(0, 10));
-      if (!fromDate) return;
-      const toDate = prompt("Data fim (opcional):", "");
-      const reason = prompt("Motivo/CID:", "Atestado");
-      away.push({ id: Date.now(), empId, fromDate, toDate, reason });
-      render();
-    }
-    function removeAway(id) {
-      away = away.filter(a => a.id !== id);
-      render();
+    // ================== Employee Modal ==================
+    function EmployeeModal({ show, onClose, formData, setFormData, onSave }) {
+      if (!show) return null;
+      return (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+          <form
+            onSubmit={onSave}
+            className="bg-slate-800 p-6 rounded-2xl w-full max-w-lg space-y-4 shadow-lg"
+          >
+            <h3 className="text-xl font-bold">
+              {formData.id ? "Editar Funcionário" : "Novo Funcionário"}
+            </h3>
+            {["name","cpf","role","dept","salary","adm"].map(field => (
+              <input
+                key={field}
+                className="w-full p-2 rounded bg-slate-700"
+                placeholder={field === "adm" ? "Data de admissão" : field.charAt(0).toUpperCase()+field.slice(1)}
+                type={field === "salary" ? "number" : field === "adm" ? "date" : "text"}
+                value={formData[field]}
+                onChange={(e)=>setFormData({...formData,[field]:e.target.value})}
+              />
+            ))}
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                className="px-3 py-1 bg-slate-600 rounded hover:bg-slate-500 transition"
+                onClick={onClose}
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="px-3 py-1 bg-cyan-600 rounded hover:bg-cyan-500 transition"
+              >
+                Salvar
+              </button>
+            </div>
+          </form>
+        </div>
+      );
     }
 
-    render();
+    // ================== Main App ==================
+    function App() {
+      const [view,setView]=useState("dashboard");
+      const [employees,setEmployees]=useState([]);
+      const [away,setAway]=useState([]);
+      const [search,setSearch]=useState("");
+      const [showModal,setShowModal]=useState(false);
+      const [formData,setFormData]=useState({id:"",name:"",cpf:"",role:"",dept:"",salary:"",adm:""});
+
+      // 🔹 Carregar do LocalStorage
+      useEffect(()=>{
+        const empLS = localStorage.getItem("employees");
+        if(empLS) setEmployees(JSON.parse(empLS));
+        const awayLS = localStorage.getItem("away");
+        if(awayLS) setAway(JSON.parse(awayLS));
+      },[]);
+
+      // 🔹 Salvar no LocalStorage
+      useEffect(()=>{
+        localStorage.setItem("employees",JSON.stringify(employees));
+      },[employees]);
+
+      useEffect(()=>{
+        localStorage.setItem("away",JSON.stringify(away));
+      },[away]);
+
+      const filteredEmployees = employees.filter(e => e.name.toLowerCase().includes(search.toLowerCase()));
+      const currentAway = away.filter(a => {
+        const now = new Date();
+        const f = new Date(a.fromDate);
+        const t = a.toDate ? new Date(a.toDate) : f;
+        return f <= now && now <= t;
+      });
+
+      const handleSave = e=>{
+        e.preventDefault();
+        if(!formData.name) return;
+        if(formData.id){
+          setEmployees(employees.map(emp=>emp.id===formData.id?formData:emp));
+        } else {
+          const id = Date.now();
+          setEmployees([...employees,{...formData,id}]);
+        }
+        setFormData({id:"",name:"",cpf:"",role:"",dept:"",salary:"",adm:""});
+        setShowModal(false);
+      }
+
+      const handleDelete = id=>{
+        if(confirm("Remover funcionário?")){
+          setEmployees(employees.filter(e=>e.id!==id));
+          setAway(away.filter(a=>a.empId!==id));
+        }
+      }
+
+      const handleEdit = emp=>{
+        setFormData(emp);
+        setShowModal(true);
+      }
+
+      const registerAway = empId=>{
+        const fromDate = prompt("Data início (YYYY-MM-DD):", new Date().toISOString().slice(0,10));
+        if(!fromDate) return;
+        const toDate = prompt("Data fim (opcional):","");
+        const reason = prompt("Motivo/CID:","CID-10 F32 - Depressão");
+        const id = Date.now();
+        setAway([...away,{id,empId,fromDate,toDate:toDate||null,reason}]);
+      }
+
+      const removeAway = id=>{
+        setAway(away.filter(a=>a.id!==id));
+      }
+
+      return (
+        <div className="flex min-h-screen bg-slate-900 text-slate-100">
+          <Sidebar
+            view={view}
+            setView={setView}
+            search={search}
+            setSearch={setSearch}
+            onAdd={()=>setShowModal(true)}
+          />
+          <main className="flex-1 p-6 overflow-y-auto">
+            {view==="dashboard" && <Dashboard employees={employees} currentAway={currentAway}/>}
+            {view==="funcionarios" && <Employees filteredEmployees={filteredEmployees} onEdit={handleEdit} onDelete={handleDelete} onAway={registerAway}/>}
+            {view==="ferias" && <AwayList away={away} employees={employees} onRemove={removeAway}/>}
+            {view==="cipa" && <CipaReport away={away}/>}
+          </main>
+          <EmployeeModal show={showModal} onClose={()=>setShowModal(false)} formData={formData} setFormData={setFormData} onSave={handleSave}/>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<App />);
   </script>
 </body>
 </html>
