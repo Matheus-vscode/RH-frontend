@@ -180,7 +180,7 @@ function EmployeeModal({ show, onClose, formData, setFormData, onSave }) {
 }
 
 // ================== Main App ==================
-function App(){
+function App() {
   const [view,setView]=useState("dashboard");
   const [employees,setEmployees]=useState([]);
   const [away,setAway]=useState([]);
@@ -188,93 +188,114 @@ function App(){
   const [showModal,setShowModal]=useState(false);
   const [formData,setFormData]=useState({id:"",name:"",cpf:"",role:"",dept:"",salary:"",adm:""});
 
-  // ===== Buscar dados do backend =====
-  useEffect(()=>{
-    const fetchData = async () => {
-      try{
-        const empRes = await fetch("http://localhost:3001/employees");
-        const empData = await empRes.json();
-        setEmployees(empData);
+  // ================== Fetch employees ==================
+  const fetchEmployees = async () => {
+    try {
+      const res = await fetch("http://localhost:3001/employees");
+      const data = await res.json();
+      setEmployees(data);
+    } catch (err) {
+      console.error("Erro ao buscar funcionários:", err);
+    }
+  };
 
-        const awayRes = await fetch("http://localhost:3001/employees/away");
-        const awayData = await awayRes.json();
-        setAway(awayData);
-      }catch(err){
-        console.error(err);
-      }
-    };
-    fetchData();
+  // ================== Fetch away ==================
+  const fetchAway = async () => {
+    try {
+      const res = await fetch("http://localhost:3001/away");
+      const data = await res.json();
+      setAway(data);
+    } catch (err) {
+      console.error("Erro ao buscar afastamentos:", err);
+    }
+  };
+
+  useEffect(()=>{
+    fetchEmployees();
+    fetchAway();
   },[]);
 
+  // ================== Save employee ==================
   const handleSave = async (e) => {
     e.preventDefault();
-    if(!formData.name) return;
-
-    try{
+    try {
       if(formData.id){
-        await fetch(`http://localhost:3001/employees/${formData.id}`,{
+        // Editar funcionário
+        await fetch(`http://localhost:3001/employees/${formData.id}`, {
           method:"PUT",
           headers:{"Content-Type":"application/json"},
           body:JSON.stringify(formData)
         });
-      }else{
-        await fetch("http://localhost:3001/employees",{
+      } else {
+        // Novo funcionário
+        await fetch("http://localhost:3001/employees", {
           method:"POST",
           headers:{"Content-Type":"application/json"},
           body:JSON.stringify(formData)
         });
       }
-      setFormData({id:"",name:"",cpf:"",role:"",dept:"",salary:"",adm:""});
       setShowModal(false);
-      const empRes = await fetch("http://localhost:3001/employees");
-      setEmployees(await empRes.json());
-    }catch(err){console.error(err);}
+      setFormData({id:"",name:"",cpf:"",role:"",dept:"",salary:"",adm:""});
+      fetchEmployees();
+    } catch(err) {
+      console.error(err);
+    }
   };
 
+  // ================== Delete employee ==================
   const handleDelete = async (id) => {
     if(!confirm("Remover funcionário?")) return;
-    try{
-      await fetch(`http://localhost:3001/employees/${id}`,{method:"DELETE"});
-      setEmployees(employees.filter(e=>e.id!==id));
-      setAway(away.filter(a=>a.employeeId!==id));
-    }catch(err){console.error(err);}
+    try {
+      await fetch(`http://localhost:3001/employees/${id}`, {method:"DELETE"});
+      fetchEmployees();
+      // Também remove afastamentos
+      setAway(prev => prev.filter(a=>a.employeeId!==id));
+    } catch(err) {
+      console.error(err);
+    }
   };
 
-  const handleEdit = (emp) => {setFormData(emp); setShowModal(true);};
-
+  // ================== Register away ==================
   const registerAway = async (empId) => {
-    const fromDate = prompt("Data início (YYYY-MM-DD):", new Date().toISOString().slice(0,10));
-    if(!fromDate) return;
-    const toDate = prompt("Data fim (opcional):","");
+    const startDate = prompt("Data início (YYYY-MM-DD):", new Date().toISOString().slice(0,10));
+    if(!startDate) return;
+    const endDate = prompt("Data fim (opcional):","");
     const reason = prompt("Motivo/CID:","CID-10 F32 - Depressão");
-
-    try{
-      await fetch("http://localhost:3001/employees/away",{
+    try {
+      await fetch("http://localhost:3001/away/add", {
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({employeeId:empId,startDate:fromDate,endDate:toDate||null,reason})
+        body:JSON.stringify({employeeId:empId, startDate, endDate, reason})
       });
-      const awayRes = await fetch("http://localhost:3001/employees/away");
-      setAway(await awayRes.json());
-    }catch(err){console.error(err);}
+      fetchAway();
+    } catch(err) {
+      console.error(err);
+    }
   };
 
   const removeAway = async (id) => {
-    try{
-      await fetch(`http://localhost:3001/employees/away/${id}`,{method:"DELETE"});
-      setAway(away.filter(a=>a.id!==id));
-    }catch(err){console.error(err);}
+    try {
+      await fetch(`http://localhost:3001/away/${id}`, {method:"DELETE"});
+      fetchAway();
+    } catch(err) {
+      console.error(err);
+    }
   };
 
   const filteredEmployees = employees.filter(e=>e.name.toLowerCase().includes(search.toLowerCase()));
-  const currentAway = away.filter(a=>{const now=new Date(); const f=new Date(a.startDate); const t=a.endDate?new Date(a.endDate):f; return f<=now && now<=t;});
+  const currentAway = away.filter(a=>{
+    const now = new Date();
+    const f = new Date(a.startDate);
+    const t = a.endDate ? new Date(a.endDate) : f;
+    return f <= now && now <= t;
+  });
 
   return (
     <div className="flex min-h-screen bg-slate-900 text-slate-100">
       <Sidebar view={view} setView={setView} search={search} setSearch={setSearch} onAdd={()=>setShowModal(true)}/>
       <main className="flex-1 p-6 overflow-y-auto">
         {view==="dashboard" && <Dashboard employees={employees} currentAway={currentAway}/>}
-        {view==="funcionarios" && <Employees filteredEmployees={filteredEmployees} onEdit={handleEdit} onDelete={handleDelete} onAway={registerAway}/>}
+        {view==="funcionarios" && <Employees filteredEmployees={filteredEmployees} onEdit={(emp)=>{setFormData(emp); setShowModal(true)}} onDelete={handleDelete} onAway={registerAway}/>}
         {view==="ferias" && <AwayList away={away} employees={employees} onRemove={removeAway}/>}
         {view==="cipa" && <CipaReport away={away}/>}
       </main>
