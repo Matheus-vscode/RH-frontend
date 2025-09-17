@@ -11,22 +11,6 @@
 <body>
   <div id="root"></div>
 
-  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-  <script type="text/babel">
-    function App() {
-      return <h1>Hello React!</h1>;
-    }
-
-    const root = ReactDOM.createRoot(document.getElementById("root"));
-    root.render(<App />);
-  </script>
-</body>
-<body>
-  <div id="root"></div>
-
   <!-- React e ReactDOM via CDN -->
   <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
@@ -71,11 +55,6 @@
           >
             + Novo funcionário
           </button>
-          <div className="mt-6 text-sm text-slate-400">
-            <p>👩‍💼 PO: Franciele</p>
-            <p>🧑‍💻 SM: Diego</p>
-            <p>👨‍🔧 Dev: Matheus</p>
-          </div>
         </aside>
       );
     }
@@ -100,7 +79,7 @@
       );
     }
 
-    // ================== Employees Table ==================
+    // ================== Employees ==================
     function Employees({ filteredEmployees, onEdit, onDelete, onAway }) {
       return filteredEmployees.length === 0 ? (
         <p className="text-slate-400">Nenhum funcionário cadastrado.</p>
@@ -126,21 +105,15 @@
                   <button
                     className="px-3 py-1 bg-slate-700 rounded hover:bg-cyan-600 transition"
                     onClick={() => onEdit(e)}
-                  >
-                    Editar
-                  </button>
+                  >Editar</button>
                   <button
                     className="px-3 py-1 bg-red-600 rounded hover:bg-red-500 transition"
                     onClick={() => onDelete(e.id)}
-                  >
-                    Remover
-                  </button>
+                  >Remover</button>
                   <button
                     className="px-3 py-1 bg-cyan-600 rounded hover:bg-cyan-500 transition"
                     onClick={() => onAway(e.id)}
-                  >
-                    Afastar
-                  </button>
+                  >Afastar</button>
                 </td>
               </tr>
             ))}
@@ -149,96 +122,7 @@
       );
     }
 
-    // ================== Away List ==================
-    function AwayList({ away, employees, onRemove }) {
-      return away.length === 0 ? (
-        <p className="text-slate-400">Nenhum afastamento registrado.</p>
-      ) : (
-        <ul className="space-y-2">
-          {away.map((a) => {
-            const emp = employees.find((e) => e.id === a.empId);
-            return (
-              <li
-                key={a.id}
-                className="bg-slate-800 p-4 rounded-xl flex justify-between items-center shadow-md"
-              >
-                <div>
-                  <p className="font-semibold">{emp?.name || "[Ex-funcionário]"}</p>
-                  <p className="text-slate-400 text-sm">
-                    {a.reason} — {a.fromDate} {a.toDate ? até ${a.toDate} : ""}
-                  </p>
-                </div>
-                <button
-                  className="px-3 py-1 bg-red-600 rounded hover:bg-red-500 transition"
-                  onClick={() => onRemove(a.id)}
-                >
-                  Remover
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      );
-    }
-
-    // ================== CIPA Report ==================
-    function CipaReport({ away }) {
-      if (away.length === 0)
-        return <p className="text-slate-400">Nenhum afastamento registrado.</p>;
-
-      const stats = away.reduce((acc, a) => {
-        acc[a.reason] = (acc[a.reason] || 0) + 1;
-        return acc;
-      }, {});
-
-      const alertas = [];
-      for (const cid in stats) {
-        if (cid.toLowerCase().includes("depress") || cid.toLowerCase().includes("f32")) {
-          alertas.push("⚠ Muitos afastamentos por problemas psicológicos.");
-        }
-        if (cid.toLowerCase().includes("acidente") || cid.toLowerCase().includes("s72")) {
-          alertas.push("⚠ Reincidência de acidentes de trabalho.");
-        }
-      }
-
-      return (
-        <div className="space-y-4">
-          <h2 className="text-xl font-bold">Relatório para CIPA</h2>
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="border-b border-slate-700">
-                <th className="p-2">CID/Motivo</th>
-                <th className="p-2">Quantidade</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Object.entries(stats).map(([cid, qtd]) => (
-                <tr key={cid} className="border-b border-slate-800">
-                  <td className="p-2">{cid}</td>
-                  <td className="p-2">{qtd}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          {alertas.length > 0 && (
-            <div className="bg-red-600/20 border border-red-500 rounded-lg p-4 text-red-300">
-              <h3 className="font-bold">⚠ Recomendações:</h3>
-              <ul className="list-disc pl-5">
-                {alertas.map((a, i) => (
-                  <li key={i}>{a}</li>
-                ))}
-              </ul>
-              <p className="mt-2">
-                👉 Encaminhar ao RH e CIPA para análise. Considerar palestras, apoio psicológico e revisão de segurança.
-              </p>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    // ================== Employee Modal ==================
+    // ================== Modal ==================
     function EmployeeModal({ show, onClose, formData, setFormData, onSave }) {
       if (!show) return null;
       return (
@@ -261,19 +145,8 @@
               />
             ))}
             <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                className="px-3 py-1 bg-slate-600 rounded hover:bg-slate-500 transition"
-                onClick={onClose}
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                className="px-3 py-1 bg-cyan-600 rounded hover:bg-cyan-500 transition"
-              >
-                Salvar
-              </button>
+              <button type="button" className="px-3 py-1 bg-slate-600 rounded hover:bg-slate-500 transition" onClick={onClose}>Cancelar</button>
+              <button type="submit" className="px-3 py-1 bg-cyan-600 rounded hover:bg-cyan-500 transition">Salvar</button>
             </div>
           </form>
         </div>
@@ -282,14 +155,14 @@
 
     // ================== Main App ==================
     function App() {
-      const [view,setView]=useState("dashboard");
-      const [employees,setEmployees]=useState([]);
-      const [away,setAway]=useState([]);
-      const [search,setSearch]=useState("");
-      const [showModal,setShowModal]=useState(false);
-      const [formData,setFormData]=useState({id:"",name:"",cpf:"",role:"",dept:"",salary:"",adm:""});
+      const [view,setView] = useState("dashboard");
+      const [employees,setEmployees] = useState([]);
+      const [away,setAway] = useState([]);
+      const [search,setSearch] = useState("");
+      const [showModal,setShowModal] = useState(false);
+      const [formData,setFormData] = useState({id:"",name:"",cpf:"",role:"",dept:"",salary:"",adm:""});
 
-      // 🔹 Carregar do LocalStorage
+      // Carregar do LocalStorage
       useEffect(()=>{
         const empLS = localStorage.getItem("employees");
         if(empLS) setEmployees(JSON.parse(empLS));
@@ -297,17 +170,12 @@
         if(awayLS) setAway(JSON.parse(awayLS));
       },[]);
 
-      // 🔹 Salvar no LocalStorage
-      useEffect(()=>{
-        localStorage.setItem("employees",JSON.stringify(employees));
-      },[employees]);
+      // Salvar no LocalStorage
+      useEffect(()=>{ localStorage.setItem("employees",JSON.stringify(employees)); },[employees]);
+      useEffect(()=>{ localStorage.setItem("away",JSON.stringify(away)); },[away]);
 
-      useEffect(()=>{
-        localStorage.setItem("away",JSON.stringify(away));
-      },[away]);
-
-      const filteredEmployees = employees.filter(e => e.name.toLowerCase().includes(search.toLowerCase()));
-      const currentAway = away.filter(a => {
+      const filteredEmployees = employees.filter(e=>e.name.toLowerCase().includes(search.toLowerCase()));
+      const currentAway = away.filter(a=>{
         const now = new Date();
         const f = new Date(a.fromDate);
         const t = a.toDate ? new Date(a.toDate) : f;
@@ -334,11 +202,7 @@
         }
       }
 
-      const handleEdit = emp=>{
-        setFormData(emp);
-        setShowModal(true);
-      }
-
+      const handleEdit = emp=>{ setFormData(emp); setShowModal(true); }
       const registerAway = empId=>{
         const fromDate = prompt("Data início (YYYY-MM-DD):", new Date().toISOString().slice(0,10));
         if(!fromDate) return;
@@ -347,20 +211,11 @@
         const id = Date.now();
         setAway([...away,{id,empId,fromDate,toDate:toDate||null,reason}]);
       }
-
-      const removeAway = id=>{
-        setAway(away.filter(a=>a.id!==id));
-      }
+      const removeAway = id=>{ setAway(away.filter(a=>a.id!==id)); }
 
       return (
         <div className="flex min-h-screen bg-slate-900 text-slate-100">
-          <Sidebar
-            view={view}
-            setView={setView}
-            search={search}
-            setSearch={setSearch}
-            onAdd={()=>setShowModal(true)}
-          />
+          <Sidebar view={view} setView={setView} search={search} setSearch={setSearch} onAdd={()=>setShowModal(true)}/>
           <main className="flex-1 p-6 overflow-y-auto">
             {view==="dashboard" && <Dashboard employees={employees} currentAway={currentAway}/>}
             {view==="funcionarios" && <Employees filteredEmployees={filteredEmployees} onEdit={handleEdit} onDelete={handleDelete} onAway={registerAway}/>}
@@ -372,6 +227,7 @@
       );
     }
 
+    // ================== Render ==================
     const root = ReactDOM.createRoot(document.getElementById("root"));
     root.render(<App />);
   </script>
