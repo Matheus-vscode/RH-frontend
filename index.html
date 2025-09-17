@@ -194,4 +194,41 @@ function App(){
   },[]);
 
   useEffect(()=>localStorage.setItem("employees",JSON.stringify(employees)),[employees]);
-  useEffect(()=>localStorage.setItem("away",JSON
+  useEffect(()=>localStorage.setItem("away",JSON.stringify(away)),[away]);
+
+  const handleSave=e=>{e.preventDefault(); if(!formData.name) return;
+    if(formData.id){
+      setEmployees(employees.map(emp=>emp.id===formData.id?formData:emp));
+    }else{
+      setEmployees([...employees,{...formData,id:Date.now()}]);
+    }
+    setFormData({id:"",name:"",cpf:"",role:"",dept:"",salary:"",adm:""});
+    setShowModal(false);
+  };
+
+  const handleDelete=id=>{if(confirm("Remover funcionário?")){setEmployees(employees.filter(e=>e.id!==id)); setAway(away.filter(a=>a.empId!==id));}};
+  const handleEdit=emp=>{setFormData(emp); setShowModal(true);};
+  const registerAway=empId=>{const fromDate=prompt("Data início (YYYY-MM-DD):", new Date().toISOString().slice(0,10)); if(!fromDate) return; const toDate=prompt("Data fim (opcional):",""); const reason=prompt("Motivo/CID:","CID-10 F32 - Depressão"); setAway([...away,{id:Date.now(),empId,fromDate,toDate:toDate||null,reason}]);};
+  const removeAway=id=>setAway(away.filter(a=>a.id!==id));
+
+  const filteredEmployees=employees.filter(e=>e.name.toLowerCase().includes(search.toLowerCase()));
+  const currentAway=away.filter(a=>{const now=new Date(); const f=new Date(a.fromDate); const t=a.toDate?new Date(a.toDate):f; return f<=now && now<=t;});
+
+  return (
+    <div className="flex min-h-screen bg-slate-900 text-slate-100">
+      <Sidebar view={view} setView={setView} search={search} setSearch={setSearch} onAdd={()=>setShowModal(true)}/>
+      <main className="flex-1 p-6 overflow-y-auto">
+        {view==="dashboard" && <Dashboard employees={employees} currentAway={currentAway}/>}
+        {view==="funcionarios" && <Employees filteredEmployees={filteredEmployees} onEdit={handleEdit} onDelete={handleDelete} onAway={registerAway}/>}
+        {view==="ferias" && <AwayList away={away} employees={employees} onRemove={removeAway}/>}
+        {view==="cipa" && <CipaReport away={away}/>}
+      </main>
+      <EmployeeModal show={showModal} onClose={()=>setShowModal(false)} formData={formData} setFormData={setFormData} onSave={handleSave}/>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
