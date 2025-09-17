@@ -157,23 +157,22 @@ function CipaReport({ away }) {
 
 // ================== Modal ==================
 function EmployeeModal({ show, onClose, formData, setFormData, onSave }) {
-  if(!show) return null;
+  if (!show) return null;
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <form onSubmit={onSave} className="bg-slate-800 p-6 rounded-2xl w-full max-w-lg space-y-4 shadow-lg">
-        <h3 className="text-xl font-bold">{formData.id?"Editar Funcionário":"Novo Funcionário"}</h3>
+        <h3 className="text-2xl font-bold text-cyan-400">{formData.id ? "Editar Funcionário" : "Novo Funcionário"}</h3>
 
-        {/* Inputs em português */}
-        <input className="w-full p-2 rounded bg-slate-700" placeholder="Nome" type="text" value={formData.name} onChange={e=>setFormData({...formData,name:e.target.value})} />
-        <input className="w-full p-2 rounded bg-slate-700" placeholder="CPF" type="text" value={formData.cpf} onChange={e=>setFormData({...formData,cpf:e.target.value})} />
-        <input className="w-full p-2 rounded bg-slate-700" placeholder="Cargo" type="text" value={formData.role} onChange={e=>setFormData({...formData,role:e.target.value})} />
-        <input className="w-full p-2 rounded bg-slate-700" placeholder="Departamento" type="text" value={formData.dept} onChange={e=>setFormData({...formData,dept:e.target.value})} />
-        <input className="w-full p-2 rounded bg-slate-700" placeholder="Salário" type="number" value={formData.salary} onChange={e=>setFormData({...formData,salary:e.target.value})} />
-        <input className="w-full p-2 rounded bg-slate-700" placeholder="Data de admissão" type="date" value={formData.adm} onChange={e=>setFormData({...formData,adm:e.target.value})} />
+        <input className="w-full p-3 rounded bg-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400" placeholder="Nome" type="text" value={formData.name} onChange={e=>setFormData({...formData,name:e.target.value})} />
+        <input className="w-full p-3 rounded bg-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400" placeholder="CPF" type="text" value={formData.cpf} onChange={e=>setFormData({...formData,cpf:e.target.value})} />
+        <input className="w-full p-3 rounded bg-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400" placeholder="Cargo" type="text" value={formData.role} onChange={e=>setFormData({...formData,role:e.target.value})} />
+        <input className="w-full p-3 rounded bg-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400" placeholder="Departamento" type="text" value={formData.dept} onChange={e=>setFormData({...formData,dept:e.target.value})} />
+        <input className="w-full p-3 rounded bg-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400" placeholder="Salário" type="number" value={formData.salary} onChange={e=>setFormData({...formData,salary:e.target.value})} />
+        <input className="w-full p-3 rounded bg-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400" placeholder="Data de admissão" type="date" value={formData.adm} onChange={e=>setFormData({...formData,adm:e.target.value})} />
 
-        <div className="flex justify-end gap-2">
-          <button type="button" className="px-3 py-1 bg-slate-600 rounded hover:bg-slate-500 transition" onClick={onClose}>Cancelar</button>
-          <button type="submit" className="px-3 py-1 bg-cyan-600 rounded hover:bg-cyan-500 transition">Salvar</button>
+        <div className="flex justify-end gap-3 mt-4">
+          <button type="button" className="px-4 py-2 bg-slate-600 rounded font-semibold hover:bg-slate-500 transition hover:scale-105" onClick={onClose}>Cancelar</button>
+          <button type="submit" className="px-4 py-2 bg-cyan-600 rounded font-semibold hover:bg-cyan-500 transition hover:scale-105">Salvar</button>
         </div>
       </form>
     </div>
@@ -195,61 +194,4 @@ function App(){
   },[]);
 
   useEffect(()=>localStorage.setItem("employees",JSON.stringify(employees)),[employees]);
-  useEffect(()=>localStorage.setItem("away",JSON.stringify(away)),[away]);
-
-  const filteredEmployees = employees.filter(e=>e.name.toLowerCase().includes(search.toLowerCase()));
-  const currentAway = away.filter(a=>{
-    const now = new Date();
-    const f = new Date(a.fromDate);
-    const t = a.toDate ? new Date(a.toDate) : f;
-    return f<=now && now<=t;
-  });
-
-  const handleSave = e=>{
-    e.preventDefault();
-    if(!formData.name) return;
-    if(formData.id){
-      setEmployees(employees.map(emp=>emp.id===formData.id?formData:emp));
-    } else {
-      setEmployees([...employees,{...formData,id:Date.now()}]);
-    }
-    setFormData({id:"",name:"",cpf:"",role:"",dept:"",salary:"",adm:""});
-    setShowModal(false);
-  }
-
-  const handleDelete = id=>{
-    if(confirm("Remover funcionário?")){
-      setEmployees(employees.filter(e=>e.id!==id));
-      setAway(away.filter(a=>a.empId!==id));
-    }
-  }
-
-  const handleEdit = emp=>{ setFormData(emp); setShowModal(true); }
-  const registerAway = empId=>{
-    const fromDate = prompt("Data início (YYYY-MM-DD):", new Date().toISOString().slice(0,10));
-    if(!fromDate) return;
-    const toDate = prompt("Data fim (opcional):","");
-    const reason = prompt("Motivo/CID:","CID-10 F32 - Depressão");
-    setAway([...away,{id:Date.now(),empId,fromDate,toDate:toDate||null,reason}]);
-  }
-  const removeAway = id=>{ setAway(away.filter(a=>a.id!==id)); }
-
-  return (
-    <div className="flex min-h-screen bg-slate-900 text-slate-100">
-      <Sidebar view={view} setView={setView} search={search} setSearch={setSearch} onAdd={()=>setShowModal(true)}/>
-      <main className="flex-1 p-6 overflow-y-auto">
-        {view==="dashboard" && <Dashboard employees={employees} currentAway={currentAway}/>}
-        {view==="funcionarios" && <Employees filteredEmployees={filteredEmployees} onEdit={handleEdit} onDelete={handleDelete} onAway={registerAway}/>}
-        {view==="ferias" && <AwayList away={away} employees={employees} onRemove={removeAway}/>}
-        {view==="cipa" && <CipaReport away={away}/>}
-      </main>
-      <EmployeeModal show={showModal} onClose={()=>setShowModal(false)} formData={formData} setFormData={setFormData} onSave={handleSave}/>
-    </div>
-  );
-}
-
-const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(<App />);
-</script>
-</body>
-</html>
+  useEffect(()=>localStorage.setItem("away",JSON
