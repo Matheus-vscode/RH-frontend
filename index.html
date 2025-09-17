@@ -220,14 +220,12 @@ function App() {
     e.preventDefault();
     try {
       if(formData.id){
-        // Editar funcionário
         await fetch(`http://localhost:3001/employees/${formData.id}`, {
           method:"PUT",
           headers:{"Content-Type":"application/json"},
           body:JSON.stringify(formData)
         });
       } else {
-        // Novo funcionário
         await fetch("http://localhost:3001/employees", {
           method:"POST",
           headers:{"Content-Type":"application/json"},
@@ -248,7 +246,6 @@ function App() {
     try {
       await fetch(`http://localhost:3001/employees/${id}`, {method:"DELETE"});
       fetchEmployees();
-      // Também remove afastamentos
       setAway(prev => prev.filter(a=>a.employeeId!==id));
     } catch(err) {
       console.error(err);
@@ -262,7 +259,7 @@ function App() {
     const endDate = prompt("Data fim (opcional):","");
     const reason = prompt("Motivo/CID:","CID-10 F32 - Depressão");
     try {
-      await fetch("http://localhost:3001/away/add", {
+      await fetch("http://localhost:3001/away", {
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({employeeId:empId, startDate, endDate, reason})
