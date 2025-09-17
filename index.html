@@ -55,8 +55,7 @@ function Sidebar({ view, setView, search, setSearch, onAdd, employees, away }) {
         <button className="w-full px-3 py-2 bg-green-600 rounded-lg hover:bg-green-500 transition text-white" onClick={()=>exportCSV("funcionarios.csv", employees)}>⬇ Exportar Funcionários</button>
         <button className="w-full px-3 py-2 bg-yellow-600 rounded-lg hover:bg-yellow-500 transition text-white" onClick={()=>exportCSV("afastamentos.csv", away)}>⬇ Exportar Afastamentos</button>
       </div>
-
-      <button className="mt-auto w-full bg-gradient-to-r from-cyan-500 to-purple-600 text-white py-2 rounded-xl hover:scale-105 transition" onClick={onAdd}>+ Novo funcionário</button>
+       <button className="mt-auto w-full bg-gradient-to-r from-cyan-500 to-purple-600 text-white py-2 rounded-xl hover:scale-105 transition" onClick={onAdd}>+ Novo funcionário</button>
     </aside>
   );
 }
