@@ -95,63 +95,18 @@ function AwayList({ away, employees, onRemove }) {
   return (
     <ul className="space-y-2">
       {away.map(a=>{
-        const emp = employees.find(e=>e.id===a.empId);
+        const emp = employees.find(e=>e.id===a.employee_id);
         return (
           <li key={a.id} className="bg-slate-800 p-4 rounded-xl flex justify-between items-center shadow-md">
             <div>
               <p className="font-semibold">{emp?.name || "[Ex-funcionário]"}</p>
-              <p className="text-slate-400 text-sm">{a.reason} — {a.fromDate} {a.toDate ? `até ${a.toDate}` : ""}</p>
+              <p className="text-slate-400 text-sm">{a.reason} — {a.start_date} {a.end_date ? `até ${a.end_date}` : ""}</p>
             </div>
             <button className="px-3 py-1 bg-red-600 rounded hover:bg-red-500 transition" onClick={()=>onRemove(a.id)}>Remover</button>
           </li>
         );
       })}
     </ul>
-  );
-}
-
-// ================== CIPA Report ==================
-function CipaReport({ away }) {
-  if(away.length===0) return <p className="text-slate-400">Nenhum afastamento registrado.</p>;
-
-  const stats = away.reduce((acc,a)=>{
-    acc[a.reason] = (acc[a.reason]||0)+1;
-    return acc;
-  },{});
-
-  const alertas = [];
-  for(const cid in stats){
-    if(cid.toLowerCase().includes("depress") || cid.toLowerCase().includes("f32")) alertas.push("⚠️ Muitos afastamentos por problemas psicológicos.");
-    if(cid.toLowerCase().includes("acidente") || cid.toLowerCase().includes("s72")) alertas.push("⚠️ Reincidência de acidentes de trabalho.");
-  }
-
-  return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-bold">Relatório para CIPA</h2>
-      <table className="w-full border-collapse">
-        <thead>
-          <tr className="border-b border-slate-700">
-            <th className="p-2">CID/Motivo</th>
-            <th className="p-2">Quantidade</th>
-          </tr>
-        </thead>
-        <tbody>
-          {Object.entries(stats).map(([cid,qtd])=>(
-            <tr key={cid} className="border-b border-slate-800">
-              <td className="p-2">{cid}</td>
-              <td className="p-2">{qtd}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {alertas.length>0 && (
-        <div className="bg-red-600/20 border border-red-500 rounded-lg p-4 text-red-300">
-          <h3 className="font-bold">⚠️ Recomendações:</h3>
-          <ul className="list-disc pl-5">{alertas.map((a,i)=><li key={i}>{a}</li>)}</ul>
-          <p className="mt-2">👉 Encaminhar ao RH e CIPA para análise. Considerar palestras, apoio psicológico e revisão de segurança.</p>
-        </div>
-      )}
-    </div>
   );
 }
 
@@ -188,76 +143,82 @@ function App() {
   const [showModal,setShowModal]=useState(false);
   const [formData,setFormData]=useState({id:"",name:"",cpf:"",role:"",dept:"",salary:"",adm:""});
 
-  // Fetch
-  const fetchData=async()=>{
-    const empRes=await fetch("http://localhost:3001/employees");
-    const empData=await empRes.json();
-    setEmployees(empData);
+  // ================== Fetch dados ==================
+  const fetchData = async () => {
+    try {
+      const empRes = await fetch("http://localhost:3001/employees");
+      const empData = await empRes.json();
+      setEmployees(empData);
 
-    const awayRes=await fetch("http://localhost:3001/away");
-    const awayData=await awayRes.json();
-    setAway(awayData);
-  };
-
-  useEffect(()=>{fetchData();},[]);
-
-  // Save
-  const handleSave=async(e)=>{
-    e.preventDefault();
-    if(!formData.name) return;
-
-    if(formData.id){
-      await fetch(`http://localhost:3001/employees/${formData.id}`,{
-        method:"PUT",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify(formData)
-      });
-    }else{
-      await fetch("http://localhost:3001/employees",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify(formData)
-      });
+      const awayRes = await fetch("http://localhost:3001/away");
+      const awayData = await awayRes.json();
+      setAway(awayData);
+    } catch (err) {
+      console.error(err);
     }
-    setFormData({id:"",name:"",cpf:"",role:"",dept:"",salary:"",adm:""});
-    setShowModal(false);
-    fetchData();
   };
 
-  const handleDelete=async(id)=>{
-    if(confirm("Remover funcionário?")){
-      await fetch(`http://localhost:3001/employees/${id}`,{method:"DELETE"});
-      const employeeAway=away.filter(a=>a.empId===id);
-      for(const a of employeeAway){
-        await fetch(`http://localhost:3001/away/${a.id}`,{method:"DELETE"});
+  useEffect(() => { fetchData(); }, []);
+
+  // ================== Salvar funcionário ==================
+  const handleSave = async (e) => {
+    e.preventDefault();
+    if (!formData.name) return;
+
+    try {
+      if (formData.id) {
+        await fetch(`http://localhost:3001/employees/${formData.id}`, {
+          method:"PUT",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify(formData)
+        });
+      } else {
+        await fetch("http://localhost:3001/employees", {
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify(formData)
+        });
       }
+
+      setFormData({id:"",name:"",cpf:"",role:"",dept:"",salary:"",adm:""});
+      setShowModal(false);
+      fetchData();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // ================== Editar/Deletar funcionário ==================
+  const handleEdit = (emp) => { setFormData(emp); setShowModal(true); };
+  const handleDelete = async (id) => {
+    if(confirm("Remover funcionário?")) {
+      await fetch(`http://localhost:3001/employees/${id}`, { method:"DELETE" });
       fetchData();
     }
   };
 
-  const handleEdit=(emp)=>{setFormData(emp); setShowModal(true);};
+  // ================== Afastamento ==================
+  const registerAway = async (empId) => {
+    const startDate = prompt("Data início (YYYY-MM-DD):", new Date().toISOString().slice(0,10));
+    if(!startDate) return;
+    const endDate = prompt("Data fim (opcional):","");
+    const reason = prompt("Motivo/CID:","CID-10 F32 - Depressão");
 
-  const registerAway=async(empId)=>{
-    const fromDate=prompt("Data início (YYYY-MM-DD):",new Date().toISOString().slice(0,10));
-    if(!fromDate) return;
-    const toDate=prompt("Data fim (opcional):","");
-    const reason=prompt("Motivo/CID:","CID-10 F32 - Depressão");
-
-    await fetch("http://localhost:3001/away",{
+    await fetch("http://localhost:3001/away", {
       method:"POST",
       headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({empId,fromDate,toDate:toDate||null,reason})
+      body:JSON.stringify({ employeeId: empId, startDate, endDate: endDate||null, reason })
     });
     fetchData();
   };
 
-  const removeAway=async(id)=>{
-    await fetch(`http://localhost:3001/away/${id}`,{method:"DELETE"});
+  const removeAway = async (id) => {
+    await fetch(`http://localhost:3001/away/${id}`, { method:"DELETE" });
     fetchData();
   };
 
-  const filteredEmployees=employees.filter(e=>e.name.toLowerCase().includes(search.toLowerCase()));
-  const currentAway=away.filter(a=>{const now=new Date(); const f=new Date(a.fromDate); const t=a.toDate?new Date(a.toDate):f; return f<=now && now<=t;});
+  const filteredEmployees = employees.filter(e=>e.name.toLowerCase().includes(search.toLowerCase()));
+  const currentAway = away.filter(a=>{ const now=new Date(); const f=new Date(a.startDate); const t=a.endDate?new Date(a.endDate):f; return f<=now && now<=t; });
 
   return (
     <div className="flex min-h-screen bg-slate-900 text-slate-100">
