@@ -95,12 +95,12 @@ function AwayList({ away, employees, onRemove }) {
   return (
     <ul className="space-y-2">
       {away.map(a=>{
-        const emp = employees.find(e=>e.id===a.employee_id);
+        const emp = employees.find(e=>e.id===a.employeeId);
         return (
           <li key={a.id} className="bg-slate-800 p-4 rounded-xl flex justify-between items-center shadow-md">
             <div>
               <p className="font-semibold">{emp?.name || "[Ex-funcionário]"}</p>
-              <p className="text-slate-400 text-sm">{a.reason} — {a.start_date} {a.end_date ? `até ${a.end_date}` : ""}</p>
+              <p className="text-slate-400 text-sm">{a.reason} — {a.startDate} {a.endDate ? `até ${a.endDate}` : ""}</p>
             </div>
             <button className="px-3 py-1 bg-red-600 rounded hover:bg-red-500 transition" onClick={()=>onRemove(a.id)}>Remover</button>
           </li>
@@ -121,8 +121,8 @@ function CipaReport({ away }) {
 
   const alertas = [];
   for(const cid in stats){
-    if(cid.toLowerCase().includes("depress") || cid.toLowerCase().includes("f32")) alertas.push("⚠️ Muitos afastamentos por problemas psicológicos.");
-    if(cid.toLowerCase().includes("acidente") || cid.toLowerCase().includes("s72")) alertas.push("⚠️ Reincidência de acidentes de trabalho.");
+    if(cid.toLowerCase().includes("depress") || cid.toLowerCase().includes("f32")) alertas.push("⚠ Muitos afastamentos por problemas psicológicos.");
+    if(cid.toLowerCase().includes("acidente") || cid.toLowerCase().includes("s72")) alertas.push("⚠ Reincidência de acidentes de trabalho.");
   }
 
   return (
@@ -146,9 +146,9 @@ function CipaReport({ away }) {
       </table>
       {alertas.length>0 && (
         <div className="bg-red-600/20 border border-red-500 rounded-lg p-4 text-red-300">
-          <h3 className="font-bold">⚠️ Recomendações:</h3>
+          <h3 className="font-bold">⚠ Recomendações:</h3>
           <ul className="list-disc pl-5">{alertas.map((a,i)=><li key={i}>{a}</li>)}</ul>
-          <p className="mt-2">👉 Encaminhar ao RH e CIPA para análise.</p>
+          <p className="mt-2">👉 Encaminhar ao RH e CIPA para análise. Considerar palestras, apoio psicológico e revisão de segurança.</p>
         </div>
       )}
     </div>
@@ -170,17 +170,17 @@ function EmployeeModal({ show, onClose, formData, setFormData, onSave }) {
         <input className="w-full p-3 rounded bg-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400" placeholder="Salário" type="number" value={formData.salary} onChange={e=>setFormData({...formData,salary:e.target.value})} />
         <input className="w-full p-3 rounded bg-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400" placeholder="Data de admissão" type="date" value={formData.adm} onChange={e=>setFormData({...formData,adm:e.target.value})} />
 
-        <div className="flex justify-end gap-2">
-          <button type="button" className="px-4 py-2 bg-slate-600 rounded hover:bg-slate-500 transition" onClick={onClose}>Cancelar</button>
-          <button type="submit" className="px-4 py-2 bg-cyan-600 rounded hover:bg-cyan-500 transition">Salvar</button>
+        <div className="flex justify-end gap-3 mt-4">
+          <button type="button" className="px-4 py-2 bg-slate-600 rounded font-semibold hover:bg-slate-500 transition hover:scale-105" onClick={onClose}>Cancelar</button>
+          <button type="submit" className="px-4 py-2 bg-cyan-600 rounded font-semibold hover:bg-cyan-500 transition hover:scale-105">Salvar</button>
         </div>
       </form>
     </div>
   );
 }
 
-// ================== App ==================
-function App() {
+// ================== Main App ==================
+function App(){
   const [view,setView]=useState("dashboard");
   const [employees,setEmployees]=useState([]);
   const [away,setAway]=useState([]);
@@ -188,25 +188,25 @@ function App() {
   const [showModal,setShowModal]=useState(false);
   const [formData,setFormData]=useState({id:"",name:"",cpf:"",role:"",dept:"",salary:"",adm:""});
 
-  // Fetch
-  
-const fetchData = async () => {
-  const empRes = await fetch("http://localhost:3001/employees");
-  const empData = await empRes.json();
-  setEmployees(empData);
-};
-      const awayRes=await fetch("http://localhost:3001/employees/away");
-      const awayData=await awayRes.json();
-      setAway(awayData);
-    }catch(err){
-      console.error("Erro ao buscar dados:",err);
-    }
-  };
+  // ===== Buscar dados do backend =====
+  useEffect(()=>{
+    const fetchData = async () => {
+      try{
+        const empRes = await fetch("http://localhost:3001/employees");
+        const empData = await empRes.json();
+        setEmployees(empData);
 
-  useEffect(()=>{fetchData();},[]);
+        const awayRes = await fetch("http://localhost:3001/employees/away");
+        const awayData = await awayRes.json();
+        setAway(awayData);
+      }catch(err){
+        console.error(err);
+      }
+    };
+    fetchData();
+  },[]);
 
-  // Save
-  const handleSave=async(e)=>{
+  const handleSave = async (e) => {
     e.preventDefault();
     if(!formData.name) return;
 
@@ -226,50 +226,52 @@ const fetchData = async () => {
       }
       setFormData({id:"",name:"",cpf:"",role:"",dept:"",salary:"",adm:""});
       setShowModal(false);
-      fetchData();
-    }catch(err){
-      console.error("Erro ao salvar:",err);
-    }
+      const empRes = await fetch("http://localhost:3001/employees");
+      setEmployees(await empRes.json());
+    }catch(err){console.error(err);}
   };
 
-  const handleDelete=async(id)=>{
-    if(confirm("Remover funcionário?")){
+  const handleDelete = async (id) => {
+    if(!confirm("Remover funcionário?")) return;
+    try{
       await fetch(`http://localhost:3001/employees/${id}`,{method:"DELETE"});
-      const employeeAway=away.filter(a=>a.employee_id===id);
-      for(const a of employeeAway){
-        await fetch(`http://localhost:3001/employees/away/${a.id}`,{method:"DELETE"});
-      }
-      fetchData();
-    }
+      setEmployees(employees.filter(e=>e.id!==id));
+      setAway(away.filter(a=>a.employeeId!==id));
+    }catch(err){console.error(err);}
   };
 
-  const handleEdit=(emp)=>{setFormData(emp); setShowModal(true);};
+  const handleEdit = (emp) => {setFormData(emp); setShowModal(true);};
 
-  const registerAway=async(empId)=>{
-    const startDate=prompt("Data início (YYYY-MM-DD):",new Date().toISOString().slice(0,10));
-    if(!startDate) return;
-    const endDate=prompt("Data fim (opcional):","");
-    const reason=prompt("Motivo/CID:","CID-10 F32 - Depressão");
+  const registerAway = async (empId) => {
+    const fromDate = prompt("Data início (YYYY-MM-DD):", new Date().toISOString().slice(0,10));
+    if(!fromDate) return;
+    const toDate = prompt("Data fim (opcional):","");
+    const reason = prompt("Motivo/CID:","CID-10 F32 - Depressão");
 
-    await fetch("http://localhost:3001/employees/away",{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({employeeId:empId,startDate,endDate: endDate||null,reason})
-    });
-    fetchData();
+    try{
+      await fetch("http://localhost:3001/employees/away",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({employeeId:empId,startDate:fromDate,endDate:toDate||null,reason})
+      });
+      const awayRes = await fetch("http://localhost:3001/employees/away");
+      setAway(await awayRes.json());
+    }catch(err){console.error(err);}
   };
 
-  const removeAway=async(id)=>{
-    await fetch(`http://localhost:3001/employees/away/${id}`,{method:"DELETE"});
-    fetchData();
+  const removeAway = async (id) => {
+    try{
+      await fetch(`http://localhost:3001/employees/away/${id}`,{method:"DELETE"});
+      setAway(away.filter(a=>a.id!==id));
+    }catch(err){console.error(err);}
   };
 
-  const filteredEmployees=employees.filter(e=>e.name.toLowerCase().includes(search.toLowerCase()));
-  const currentAway=away.filter(a=>{const now=new Date(); const f=new Date(a.start_date); const t=a.end_date?new Date(a.end_date):f; return f<=now && now<=t;});
+  const filteredEmployees = employees.filter(e=>e.name.toLowerCase().includes(search.toLowerCase()));
+  const currentAway = away.filter(a=>{const now=new Date(); const f=new Date(a.startDate); const t=a.endDate?new Date(a.endDate):f; return f<=now && now<=t;});
 
   return (
     <div className="flex min-h-screen bg-slate-900 text-slate-100">
-      <Sidebar view={view} setView={setView} search={search} setSearch={setSearch} onAdd={()=>setShowModal(true)} />
+      <Sidebar view={view} setView={setView} search={search} setSearch={setSearch} onAdd={()=>setShowModal(true)}/>
       <main className="flex-1 p-6 overflow-y-auto">
         {view==="dashboard" && <Dashboard employees={employees} currentAway={currentAway}/>}
         {view==="funcionarios" && <Employees filteredEmployees={filteredEmployees} onEdit={handleEdit} onDelete={handleDelete} onAway={registerAway}/>}
