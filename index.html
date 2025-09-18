@@ -281,15 +281,17 @@ function App(){
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({id:"", name:"", cpf:"", role:"", dept:"", salary:"", adm:""});
 
-  /* ================== Fetch data do backend ================== */
+  /* ================== Fetch Backend ================== */
   useEffect(()=>{
     fetch("http://localhost:3001/employees")
-      .then(res => res.json())
-      .then(data => setEmployees(data));
+      .then(res=>res.json())
+      .then(data=>setEmployees(data))
+      .catch(err=>console.error(err));
 
     fetch("http://localhost:3001/away")
-      .then(res => res.json())
-      .then(data => setAway(data));
+      .then(res=>res.json())
+      .then(data=>setAway(data))
+      .catch(err=>console.error(err));
   }, []);
 
   const filteredEmployees = employees.filter(e => e.name.toLowerCase().includes(search.toLowerCase()));
@@ -300,57 +302,55 @@ function App(){
     return f <= now && now <= t;
   });
 
-  /* ================== Handle Save ================== */
   const handleSave = async e => {
     e.preventDefault();
     if (!formData.name) return;
 
-    const payload = { ...formData, id: formData.id || crypto.randomUUID() };
-
     if (formData.id) {
+      // Edit
       await fetch(`http://localhost:3001/employees/${formData.id}`, {
         method: "PUT",
         headers: {"Content-Type":"application/json"},
-        body: JSON.stringify(payload)
+        body: JSON.stringify(formData)
       });
-      setEmployees(employees.map(emp => emp.id === formData.id ? payload : emp));
+      setEmployees(employees.map(emp => emp.id === formData.id ? formData : emp));
     } else {
-      await fetch("http://localhost:3001/employees", {
+      // New
+      const res = await fetch("http://localhost:3001/employees", {
         method: "POST",
         headers: {"Content-Type":"application/json"},
-        body: JSON.stringify(payload)
+        body: JSON.stringify(formData)
       });
-      setEmployees([...employees, payload]);
+      const newEmp = await res.json();
+      setEmployees([...employees, newEmp]);
     }
 
     setFormData({id:"", name:"", cpf:"", role:"", dept:"", salary:"", adm:""});
     setShowModal(false);
   };
 
-  /* ================== Delete ================== */
   const handleDelete = async id => {
     if (!confirm("Remover funcionário?")) return;
     await fetch(`http://localhost:3001/employees/${id}`, { method: "DELETE" });
     setEmployees(employees.filter(e => e.id !== id));
+    await fetch(`http://localhost:3001/away/employee/${id}`, { method: "DELETE" });
     setAway(away.filter(a => a.empId !== id));
   };
 
   const handleEdit = emp => { setFormData(emp); setShowModal(true); };
 
-  /* ================== Afastamentos ================== */
   const registerAway = async empId => {
     const fromDate = prompt("Data início (YYYY-MM-DD):", new Date().toISOString().slice(0,10));
     if (!fromDate) return;
     const toDate = prompt("Data fim (opcional):", "");
     const reason = prompt("Motivo/CID:", "CID-10 F32 - Depressão");
-
-    const payload = { id: crypto.randomUUID(), empId, fromDate, toDate: toDate || null, reason };
-    await fetch("http://localhost:3001/away", {
+    const res = await fetch("http://localhost:3001/away", {
       method: "POST",
       headers: {"Content-Type":"application/json"},
-      body: JSON.stringify(payload)
+      body: JSON.stringify({empId, fromDate, toDate: toDate||null, reason})
     });
-    setAway([...away, payload]);
+    const newAway = await res.json();
+    setAway([...away, newAway]);
   };
 
   const removeAway = async id => {
@@ -361,14 +361,15 @@ function App(){
   return (
     <div className="flex min-h-screen">
       <Sidebar view={view} setView={setView} search={search} setSearch={setSearch} onAdd={()=>setShowModal(true)} employees={employees} away={away}/>
-      <main className="flex-1 p-6 overflow-y-auto">
-        {view==="dashboard" && <Dashboard employees={employees} currentAway={currentAway} />}
-        {view==="funcionarios" && <Employees filteredEmployees={filteredEmployees} onEdit={handleEdit} onDelete={handleDelete} onAway={registerAway} />}
-        {view==="ferias" && <AwayList away={away} employees={employees} onRemove={removeAway} />}
-        {view==="cipa" && <CipaReport away={away} />}
+
+      <main className="flex-1 p-6 space-y-6">
+        {view==="dashboard" && <Dashboard employees={employees} currentAway={currentAway}/>}
+        {view==="funcionarios" && <Employees filteredEmployees={filteredEmployees} onEdit={handleEdit} onDelete={handleDelete} onAway={registerAway}/>}
+        {view==="ferias" && <AwayList away={away} employees={employees} onRemove={removeAway}/>}
+        {view==="cipa" && <CipaReport away={away}/>}
       </main>
 
-      <EmployeeModal show={showModal} onClose={()=>setShowModal(false)} formData={formData} setFormData={setFormData} onSave={handleSave} />
+      <EmployeeModal show={showModal} onClose={()=>setShowModal(false)} formData={formData} setFormData={setFormData} onSave={handleSave}/>
     </div>
   );
 }
