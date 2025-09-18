@@ -281,15 +281,16 @@ function App(){
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({id:"", name:"", cpf:"", role:"", dept:"", salary:"", adm:""});
 
-  useEffect(()=> {
-    const empLS = localStorage.getItem("employees");
-    if (empLS) setEmployees(JSON.parse(empLS));
-    const awayLS = localStorage.getItem("away");
-    if (awayLS) setAway(JSON.parse(awayLS));
-  }, []);
+  /* ================== Fetch data do backend ================== */
+  useEffect(()=>{
+    fetch("http://localhost:3001/employees")
+      .then(res => res.json())
+      .then(data => setEmployees(data));
 
-  useEffect(()=> localStorage.setItem("employees", JSON.stringify(employees)), [employees]);
-  useEffect(()=> localStorage.setItem("away", JSON.stringify(away)), [away]);
+    fetch("http://localhost:3001/away")
+      .then(res => res.json())
+      .then(data => setAway(data));
+  }, []);
 
   const filteredEmployees = employees.filter(e => e.name.toLowerCase().includes(search.toLowerCase()));
   const currentAway = away.filter(a => {
@@ -299,32 +300,63 @@ function App(){
     return f <= now && now <= t;
   });
 
-  const handleSave = e => {
+  /* ================== Handle Save ================== */
+  const handleSave = async e => {
     e.preventDefault();
     if (!formData.name) return;
-    if (formData.id) setEmployees(employees.map(emp => emp.id === formData.id ? formData : emp));
-    else setEmployees([...employees, {...formData, id: crypto.randomUUID()}]);
+
+    const payload = { ...formData, id: formData.id || crypto.randomUUID() };
+
+    if (formData.id) {
+      await fetch(`http://localhost:3001/employees/${formData.id}`, {
+        method: "PUT",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(payload)
+      });
+      setEmployees(employees.map(emp => emp.id === formData.id ? payload : emp));
+    } else {
+      await fetch("http://localhost:3001/employees", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(payload)
+      });
+      setEmployees([...employees, payload]);
+    }
+
     setFormData({id:"", name:"", cpf:"", role:"", dept:"", salary:"", adm:""});
     setShowModal(false);
   };
 
-  const handleDelete = id => {
+  /* ================== Delete ================== */
+  const handleDelete = async id => {
     if (!confirm("Remover funcionário?")) return;
+    await fetch(`http://localhost:3001/employees/${id}`, { method: "DELETE" });
     setEmployees(employees.filter(e => e.id !== id));
     setAway(away.filter(a => a.empId !== id));
   };
 
   const handleEdit = emp => { setFormData(emp); setShowModal(true); };
 
-  const registerAway = empId => {
+  /* ================== Afastamentos ================== */
+  const registerAway = async empId => {
     const fromDate = prompt("Data início (YYYY-MM-DD):", new Date().toISOString().slice(0,10));
     if (!fromDate) return;
     const toDate = prompt("Data fim (opcional):", "");
     const reason = prompt("Motivo/CID:", "CID-10 F32 - Depressão");
-    setAway([...away, { id: crypto.randomUUID(), empId, fromDate, toDate: toDate || null, reason }]);
+
+    const payload = { id: crypto.randomUUID(), empId, fromDate, toDate: toDate || null, reason };
+    await fetch("http://localhost:3001/away", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify(payload)
+    });
+    setAway([...away, payload]);
   };
 
-  const removeAway = id => setAway(away.filter(a => a.id !== id));
+  const removeAway = async id => {
+    await fetch(`http://localhost:3001/away/${id}`, { method: "DELETE" });
+    setAway(away.filter(a => a.id !== id));
+  };
 
   return (
     <div className="flex min-h-screen">
