@@ -300,30 +300,34 @@ function App(){
   });
 
   // ================ Funções com fetch =================
-  const handleSave = async e => {
-    e.preventDefault();
-    if (!formData.name) return;
+ const handleSave = async e => {
+  e.preventDefault();
+  if (!formData.name) return;
 
-    if (formData.id) {
-      await fetch(`http://localhost:3001/employees/${formData.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData)
-      });
-      setEmployees(employees.map(emp => emp.id === formData.id ? formData : emp));
-    } else {
-      const newEmp = { ...formData, id: crypto.randomUUID() };
-      await fetch("http://localhost:3001/employees", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newEmp)
-      });
-      setEmployees([...employees, newEmp]);
-    }
+  if (formData.id) {
+    // Atualizar funcionário existente
+    await fetch(`http://localhost:3001/employees/${formData.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData)
+    });
+    setEmployees(employees.map(emp => emp.id === formData.id ? formData : emp));
+  } else {
+    // Novo funcionário → envia sem ID, backend cria o ID
+    const { id, ...newEmp } = formData; // remove ID caso exista
+    const res = await fetch("http://localhost:3001/employees", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newEmp)
+    });
+    const createdEmp = await res.json(); // pega o funcionário criado com ID do backend
+    setEmployees([...employees, createdEmp]);
+  }
 
-    setFormData({id:"", name:"", cpf:"", role:"", dept:"", salary:"", adm:""});
-    setShowModal(false);
-  };
+  setFormData({id:"", name:"", cpf:"", role:"", dept:"", salary:"", adm:""});
+  setShowModal(false);
+};
+
 
   const handleDelete = async id => {
     if (!confirm("Remover funcionário?")) return;
