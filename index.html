@@ -300,38 +300,57 @@ function App(){
   });
 
   // ================ Funções com fetch =================
-  const handleSave = async e => {
-    e.preventDefault();
+  const handleSave = async (e) => {
+  e.preventDefault();
+  if (!formData.name) return alert("O nome é obrigatório.");
 
-    if (!formData.name || !formData.cpf) return alert("Preencha os campos obrigatórios!");
+  try {
+    let savedEmp;
 
-    try {
-      let savedEmp;
-      if (formData.id) {
-        const res = await fetch(`http://localhost:3001/employees/${formData.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData)
-        });
-        savedEmp = await res.json();
-        setEmployees(employees.map(emp => emp.id === savedEmp.id ? savedEmp : emp));
-      } else {
-        const res = await fetch("http://localhost:3001/employees", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData)
-        });
-        savedEmp = await res.json();
-        setEmployees([...employees, savedEmp]);
-      }
-
-      setFormData({id:"", name:"", cpf:"", role:"", dept:"", salary:"", adm:""});
-      setShowModal(false);
-    } catch(err) {
-      console.error("Erro ao salvar funcionário:", err);
-      alert("Não foi possível salvar. Veja o console.");
+    if (formData.id) {
+      // Edição de funcionário existente
+      const res = await fetch(`http://localhost:3001/employees/${formData.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.name,
+          cpf: formData.cpf,
+          role: formData.role,
+          dept: formData.dept,
+          salary: formData.salary,
+          adm: formData.adm
+        })
+      });
+      savedEmp = await res.json();
+      setEmployees(employees.map(emp => emp.id === formData.id ? savedEmp : emp));
+    } else {
+      // Novo funcionário (não enviar id, backend cria)
+      const res = await fetch("http://localhost:3001/employees", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.name,
+          cpf: formData.cpf,
+          role: formData.role,
+          dept: formData.dept,
+          salary: formData.salary,
+          adm: formData.adm
+        })
+      });
+      savedEmp = await res.json();
+      setEmployees([...employees, savedEmp]);
     }
-  };
+
+    // Resetar formulário e fechar modal
+    setFormData({ id: "", name: "", cpf: "", role: "", dept: "", salary: "", adm: "" });
+    setShowModal(false);
+
+  } catch (error) {
+    console.error("Erro ao salvar funcionário:", error);
+    alert("Não foi possível salvar. Veja o console para mais detalhes.");
+  }
+};
+
 
   const handleDelete = async id => {
     if (!confirm("Remover funcionário?")) return;
