@@ -16,15 +16,137 @@
 
 <script type="text/babel">
 const { useState, useEffect } = React;
-
 const API = "http://localhost:3001"; // endereço do backend
 
-/* Sidebar, Dashboard, Employees, AwayList, CipaReport, EmployeeModal */
-/* (mantenha exatamente os mesmos componentes que você já tinha no seu código atual)
-   não precisa mexer neles, só trocamos o App lá embaixo.
-*/
+/* ================= Sidebar ================= */
+function Sidebar({ view, setView, search, setSearch, onAdd, employees, away }) {
+  return (
+    <aside className="w-64 p-4 border-r border-slate-800 flex flex-col">
+      <h1 className="text-2xl font-bold text-cyan-400 mb-6">Sistema RH</h1>
+      <input
+        type="text"
+        placeholder="Pesquisar..."
+        className="p-2 mb-4 rounded bg-slate-800 border border-slate-700"
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+      />
+      <nav className="flex flex-col gap-2">
+        <button className={`text-left p-2 rounded ${view==="dashboard" ? "bg-cyan-700" : "hover:bg-slate-800"}`} onClick={()=>setView("dashboard")}>Dashboard</button>
+        <button className={`text-left p-2 rounded ${view==="funcionarios" ? "bg-cyan-700" : "hover:bg-slate-800"}`} onClick={()=>setView("funcionarios")}>Funcionários ({employees.length})</button>
+        <button className={`text-left p-2 rounded ${view==="ferias" ? "bg-cyan-700" : "hover:bg-slate-800"}`} onClick={()=>setView("ferias")}>Afastamentos ({away.length})</button>
+        <button className={`text-left p-2 rounded ${view==="cipa" ? "bg-cyan-700" : "hover:bg-slate-800"}`} onClick={()=>setView("cipa")}>Relatório CIPA</button>
+      </nav>
+      <button onClick={onAdd} className="mt-auto bg-cyan-600 hover:bg-cyan-700 p-2 rounded">+ Novo Funcionário</button>
+    </aside>
+  );
+}
 
-/* ================== App (com backend) ================== */
+/* ================= Dashboard ================= */
+function Dashboard({ employees, currentAway }) {
+  return (
+    <div>
+      <h2 className="text-xl font-bold mb-4">Dashboard</h2>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="p-4 bg-slate-800 rounded">Total Funcionários: <span className="font-bold">{employees.length}</span></div>
+        <div className="p-4 bg-slate-800 rounded">Em afastamento: <span className="font-bold">{currentAway.length}</span></div>
+      </div>
+    </div>
+  );
+}
+
+/* ================= Employees ================= */
+function Employees({ filteredEmployees, onEdit, onDelete, onAway }) {
+  return (
+    <div>
+      <h2 className="text-xl font-bold mb-4">Funcionários</h2>
+      <table className="w-full border-collapse">
+        <thead>
+          <tr className="bg-slate-800">
+            <th className="p-2">Nome</th>
+            <th className="p-2">CPF</th>
+            <th className="p-2">Cargo</th>
+            <th className="p-2">Depto</th>
+            <th className="p-2">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filteredEmployees.map(emp => (
+            <tr key={emp.id} className="odd:bg-slate-900 even:bg-slate-800">
+              <td className="p-2">{emp.name}</td>
+              <td className="p-2">{emp.cpf}</td>
+              <td className="p-2">{emp.role}</td>
+              <td className="p-2">{emp.dept}</td>
+              <td className="p-2 flex gap-2">
+                <button onClick={()=>onEdit(emp)} className="bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded">Editar</button>
+                <button onClick={()=>onDelete(emp.id)} className="bg-red-600 hover:bg-red-700 px-2 py-1 rounded">Excluir</button>
+                <button onClick={()=>onAway(emp.id)} className="bg-yellow-600 hover:bg-yellow-700 px-2 py-1 rounded">Afastar</button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/* ================= AwayList ================= */
+function AwayList({ away, employees, onRemove }) {
+  return (
+    <div>
+      <h2 className="text-xl font-bold mb-4">Afastamentos</h2>
+      <ul className="space-y-2">
+        {away.map(a => {
+          const emp = employees.find(e => e.id === a.empId);
+          return (
+            <li key={a.id} className="p-2 bg-slate-800 rounded flex justify-between">
+              <span>{emp?.name} - {a.fromDate} até {a.toDate || "indefinido"} ({a.reason})</span>
+              <button onClick={()=>onRemove(a.id)} className="bg-red-600 hover:bg-red-700 px-2 py-1 rounded">Remover</button>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+/* ================= CipaReport ================= */
+function CipaReport({ away }) {
+  return (
+    <div>
+      <h2 className="text-xl font-bold mb-4">Relatório CIPA</h2>
+      <p>Total afastamentos registrados: {away.length}</p>
+      <ul className="mt-4 space-y-1">
+        {away.map(a => (
+          <li key={a.id}>{a.reason} ({a.fromDate} - {a.toDate || "indefinido"})</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/* ================= EmployeeModal ================= */
+function EmployeeModal({ show, onClose, formData, setFormData, onSave }) {
+  if (!show) return null;
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center">
+      <form onSubmit={onSave} className="bg-slate-800 p-6 rounded w-96 space-y-3">
+        <h3 className="text-lg font-bold">Cadastro de Funcionário</h3>
+        <input className="w-full p-2 rounded bg-slate-700" placeholder="Nome" value={formData.name} onChange={e=>setFormData({...formData, name:e.target.value})}/>
+        <input className="w-full p-2 rounded bg-slate-700" placeholder="CPF" value={formData.cpf} onChange={e=>setFormData({...formData, cpf:e.target.value})}/>
+        <input className="w-full p-2 rounded bg-slate-700" placeholder="Cargo" value={formData.role} onChange={e=>setFormData({...formData, role:e.target.value})}/>
+        <input className="w-full p-2 rounded bg-slate-700" placeholder="Departamento" value={formData.dept} onChange={e=>setFormData({...formData, dept:e.target.value})}/>
+        <input className="w-full p-2 rounded bg-slate-700" placeholder="Salário" value={formData.salary} onChange={e=>setFormData({...formData, salary:e.target.value})}/>
+        <input className="w-full p-2 rounded bg-slate-700" placeholder="Data admissão" value={formData.adm} onChange={e=>setFormData({...formData, adm:e.target.value})}/>
+        <div className="flex gap-2 justify-end">
+          <button type="button" onClick={onClose} className="bg-slate-600 hover:bg-slate-700 px-4 py-2 rounded">Cancelar</button>
+          <button type="submit" className="bg-cyan-600 hover:bg-cyan-700 px-4 py-2 rounded">Salvar</button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+/* ================= App ================= */
 function App(){
   const [view, setView] = useState("dashboard");
   const [employees, setEmployees] = useState([]);
@@ -33,17 +155,9 @@ function App(){
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({id:"", name:"", cpf:"", role:"", dept:"", salary:"", adm:""});
 
-  // Carregar dados do backend
   useEffect(()=> {
-    fetch(`${API}/employees`)
-      .then(res => res.json())
-      .then(data => setEmployees(data))
-      .catch(err => console.error("Erro carregando funcionários:", err));
-
-    fetch(`${API}/away`)
-      .then(res => res.json())
-      .then(data => setAway(data))
-      .catch(err => console.error("Erro carregando afastamentos:", err));
+    fetch(`${API}/employees`).then(res=>res.json()).then(setEmployees);
+    fetch(`${API}/away`).then(res=>res.json()).then(setAway);
   }, []);
 
   const filteredEmployees = employees.filter(e => e.name.toLowerCase().includes(search.toLowerCase()));
@@ -54,38 +168,22 @@ function App(){
     return f <= now && now <= t;
   });
 
-  // Salvar funcionário
   const handleSave = async e => {
     e.preventDefault();
     if (!formData.name) return;
-
-    try {
-      if (formData.id) {
-        await fetch(`${API}/employees/${formData.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData)
-        });
-      } else {
-        const res = await fetch(`${API}/employees`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData)
-        });
-        const newEmp = await res.json();
-        setEmployees([...employees, newEmp]);
-      }
-      const resAll = await fetch(`${API}/employees`);
-      setEmployees(await resAll.json());
-
-      setFormData({id:"", name:"", cpf:"", role:"", dept:"", salary:"", adm:""});
-      setShowModal(false);
-    } catch(err) {
-      console.error("Erro salvando funcionário:", err);
+    if (formData.id) {
+      await fetch(`${API}/employees/${formData.id}`, {method:"PUT", headers:{"Content-Type":"application/json"}, body:JSON.stringify(formData)});
+    } else {
+      const res = await fetch(`${API}/employees`, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(formData)});
+      const newEmp = await res.json();
+      setEmployees([...employees, newEmp]);
     }
+    const resAll = await fetch(`${API}/employees`);
+    setEmployees(await resAll.json());
+    setFormData({id:"", name:"", cpf:"", role:"", dept:"", salary:"", adm:""});
+    setShowModal(false);
   };
 
-  // Deletar funcionário
   const handleDelete = async id => {
     if (!confirm("Remover funcionário?")) return;
     await fetch(`${API}/employees/${id}`, { method: "DELETE" });
@@ -94,26 +192,16 @@ function App(){
     setAway(away.filter(a => a.empId !== id));
   };
 
-  // Editar
   const handleEdit = emp => { setFormData(emp); setShowModal(true); };
-
-  // Registrar afastamento
   const registerAway = async empId => {
     const fromDate = prompt("Data início (YYYY-MM-DD):", new Date().toISOString().slice(0,10));
     if (!fromDate) return;
     const toDate = prompt("Data fim (opcional):", "");
     const reason = prompt("Motivo/CID:", "CID-10 F32 - Depressão");
-
-    const res = await fetch(`${API}/away`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ empId, fromDate, toDate: toDate || null, reason })
-    });
+    const res = await fetch(`${API}/away`, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ empId, fromDate, toDate:toDate||null, reason })});
     const newAway = await res.json();
     setAway([...away, newAway]);
   };
-
-  // Remover afastamento
   const removeAway = async id => {
     await fetch(`${API}/away/${id}`, { method: "DELETE" });
     setAway(away.filter(a => a.id !== id));
@@ -123,13 +211,12 @@ function App(){
     <div className="flex min-h-screen">
       <Sidebar view={view} setView={setView} search={search} setSearch={setSearch} onAdd={()=>setShowModal(true)} employees={employees} away={away}/>
       <main className="flex-1 p-6 overflow-y-auto">
-        {view==="dashboard" && <Dashboard employees={employees} currentAway={currentAway} />}
-        {view==="funcionarios" && <Employees filteredEmployees={filteredEmployees} onEdit={handleEdit} onDelete={handleDelete} onAway={registerAway} />}
-        {view==="ferias" && <AwayList away={away} employees={employees} onRemove={removeAway} />}
-        {view==="cipa" && <CipaReport away={away} />}
+        {view==="dashboard" && <Dashboard employees={employees} currentAway={currentAway}/>}
+        {view==="funcionarios" && <Employees filteredEmployees={filteredEmployees} onEdit={handleEdit} onDelete={handleDelete} onAway={registerAway}/>}
+        {view==="ferias" && <AwayList away={away} employees={employees} onRemove={removeAway}/>}
+        {view==="cipa" && <CipaReport away={away}/>}
       </main>
-
-      <EmployeeModal show={showModal} onClose={()=>setShowModal(false)} formData={formData} setFormData={setFormData} onSave={handleSave} />
+      <EmployeeModal show={showModal} onClose={()=>setShowModal(false)} formData={formData} setFormData={setFormData} onSave={handleSave}/>
     </div>
   );
 }
@@ -138,4 +225,3 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 </body>
 </html>
-
