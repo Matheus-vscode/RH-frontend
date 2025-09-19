@@ -16,8 +16,6 @@
 <script type="text/babel">
 const { useState, useEffect } = React;
 
-const API_URL = "http://localhost:3001";
-
 /* ================== Export CSV ================== */
 function exportCSV(filename, rows) {
   if (!rows || !rows.length) return alert("Nada para exportar.");
@@ -283,20 +281,15 @@ function App(){
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({id:"", name:"", cpf:"", role:"", dept:"", salary:"", adm:""});
 
-  /* ================== Buscar dados do backend ================== */
-  const fetchEmployees = async () => {
-    const res = await fetch(`${API_URL}/employees`);
-    const data = await res.json();
-    setEmployees(data);
-  };
+  useEffect(() => {
+    fetch("http://localhost:3001/employees")
+      .then(res => res.json())
+      .then(data => setEmployees(data));
 
-  const fetchAway = async () => {
-    const res = await fetch(`${API_URL}/away`);
-    const data = await res.json();
-    setAway(data);
-  };
-
-  useEffect(()=> { fetchEmployees(); fetchAway(); }, []);
+    fetch("http://localhost:3001/away")
+      .then(res => res.json())
+      .then(data => setAway(data));
+  }, []);
 
   const filteredEmployees = employees.filter(e => e.name.toLowerCase().includes(search.toLowerCase()));
   const currentAway = away.filter(a => {
@@ -306,62 +299,73 @@ function App(){
     return f <= now && now <= t;
   });
 
-  /* ================== CRUD Funcionários ================== */
+  // ================ Funções com fetch =================
   const handleSave = async e => {
     e.preventDefault();
     if (!formData.name) return;
 
     if (formData.id) {
-      await fetch(`${API_URL}/employees/${formData.id}`, {
+      await fetch(`http://localhost:3001/employees/${formData.id}`, {
         method: "PUT",
-        headers: {"Content-Type":"application/json"},
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData)
       });
+      setEmployees(employees.map(emp => emp.id === formData.id ? formData : emp));
     } else {
-      await fetch(`${API_URL}/employees`, {
+      const newEmp = { ...formData, id: crypto.randomUUID() };
+      await fetch("http://localhost:3001/employees", {
         method: "POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify(formData)
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newEmp)
       });
+      setEmployees([...employees, newEmp]);
     }
+
     setFormData({id:"", name:"", cpf:"", role:"", dept:"", salary:"", adm:""});
     setShowModal(false);
-    fetchEmployees();
   };
 
   const handleDelete = async id => {
     if (!confirm("Remover funcionário?")) return;
-    await fetch(`${API_URL}/employees/${id}`, { method: "DELETE" });
-    fetchEmployees();
-    fetchAway();
+    await fetch(`http://localhost:3001/employees/${id}`, { method: "DELETE" });
+    setEmployees(employees.filter(e => e.id !== id));
+    // Deletar afastamentos também
+    const removedAway = away.filter(a => a.empId === id);
+    for(const a of removedAway){
+      await fetch(`http://localhost:3001/away/${a.id}`, { method: "DELETE" });
+    }
+    setAway(away.filter(a => a.empId !== id));
   };
 
   const handleEdit = emp => { setFormData(emp); setShowModal(true); };
 
-  /* ================== CRUD Afastamentos ================== */
   const registerAway = async empId => {
     const fromDate = prompt("Data início (YYYY-MM-DD):", new Date().toISOString().slice(0,10));
     if (!fromDate) return;
     const toDate = prompt("Data fim (opcional):", "");
     const reason = prompt("Motivo/CID:", "CID-10 F32 - Depressão");
 
-    await fetch(`${API_URL}/away`, {
+    const newAway = { id: crypto.randomUUID(), empId, fromDate, toDate: toDate || null, reason };
+    await fetch("http://localhost:3001/away", {
       method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({empId, fromDate, toDate: toDate||null, reason})
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newAway)
     });
-    fetchAway();
+    setAway([...away, newAway]);
   };
 
   const removeAway = async id => {
-    await fetch(`${API_URL}/away/${id}`, { method: "DELETE" });
-    fetchAway();
+    await fetch(`http://localhost:3001/away/${id}`, { method: "DELETE" });
+    setAway(away.filter(a => a.id !== id));
   };
 
   return (
     <div className="flex min-h-screen">
-      <Sidebar view={view} setView={setView} search={search} setSearch={setSearch} onAdd={()=>setShowModal(true)} employees={employees} away={away}/>
-      <main className="flex-1 p-6 overflow-y-auto">
+      <Sidebar
+        view={view} setView={setView} search={search} setSearch={setSearch} onAdd={()=>setShowModal(true)}
+        employees={employees} away={away}
+      />
+      <main className="flex-1 p-6">
         {view==="dashboard" && <Dashboard employees={employees} currentAway={currentAway} />}
         {view==="funcionarios" && <Employees filteredEmployees={filteredEmployees} onEdit={handleEdit} onDelete={handleDelete} onAway={registerAway} />}
         {view==="ferias" && <AwayList away={away} employees={employees} onRemove={removeAway} />}
@@ -377,3 +381,4 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 </body>
 </html>
+
