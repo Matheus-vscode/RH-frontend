@@ -313,19 +313,21 @@ function App(){
     });
     setEmployees(employees.map(emp => emp.id === formData.id ? formData : emp));
   } else {
-    // Novo funcionário → envia sem ID, backend cria o ID
-    const { id, ...newEmp } = formData; // remove ID caso exista
+    // Novo funcionário - não enviar id
+    const newEmp = { name: formData.name, cpf: formData.cpf, role: formData.role, dept: formData.dept, salary: formData.salary, adm: formData.adm };
     const res = await fetch("http://localhost:3001/employees", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(newEmp)
     });
-    const createdEmp = await res.json(); // pega o funcionário criado com ID do backend
-    setEmployees([...employees, createdEmp]);
+    const savedEmp = await res.json();
+    setEmployees([...employees, savedEmp]); // salvar o que o backend retornou
   }
 
   setFormData({id:"", name:"", cpf:"", role:"", dept:"", salary:"", adm:""});
   setShowModal(false);
+};
+
 };
 
 
