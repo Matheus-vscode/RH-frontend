@@ -15,9 +15,8 @@
 
 <script type="text/babel">
 const { useState, useEffect } = React;
-const API = "http://localhost:3000"; // ajuste se seu backend usar outra porta ou prefixo
 
-/* ================== Export CSV ================== */
+// ================== Export CSV ==================
 function exportCSV(filename, rows) {
   if (!rows || !rows.length) return alert("Nada para exportar.");
   const separator = ";";
@@ -31,7 +30,7 @@ function exportCSV(filename, rows) {
   link.click();
 }
 
-/* ================== Sidebar ================== */
+// ================== Sidebar ==================
 function Sidebar({ view, setView, search, setSearch, onAdd, employees, away }) {
   return (
     <aside className="w-64 p-4 border-r border-slate-800 flex flex-col bg-slate-900">
@@ -89,7 +88,7 @@ function Sidebar({ view, setView, search, setSearch, onAdd, employees, away }) {
   );
 }
 
-/* ================== Dashboard ================== */
+// ================== Dashboard ==================
 function Dashboard({ employees, currentAway }) {
   return (
     <div className="grid md:grid-cols-3 gap-4">
@@ -109,7 +108,7 @@ function Dashboard({ employees, currentAway }) {
   );
 }
 
-/* ================== Employees (table) ================== */
+// ================== Employees ==================
 function Employees({ filteredEmployees, onEdit, onDelete, onAway }) {
   return filteredEmployees.length === 0 ? (
     <p className="text-slate-400">Nenhum funcionário cadastrado.</p>
@@ -121,23 +120,16 @@ function Employees({ filteredEmployees, onEdit, onDelete, onAway }) {
           <th className="p-2 text-slate-200">CPF</th>
           <th className="p-2 text-slate-200">Cargo</th>
           <th className="p-2 text-slate-200">Departamento</th>
-          <th className="p-2 text-slate-200">Salário</th>
-          <th className="p-2 text-slate-200">Benefícios</th>
-          <th className="p-2 text-slate-200">Folha</th>
           <th className="p-2 text-slate-200">Ações</th>
         </tr>
       </thead>
       <tbody>
         {filteredEmployees.map(e => (
           <tr key={e.id} className="border-b border-slate-800 hover:bg-slate-700 transition">
-            {/* Suporta campos em pt/en (nome/name, cargo/role, dept/department, salario/salary, beneficios/benefits, folha/payroll) */}
-            <td className="p-2">{e.name || e.nome}</td>
-            <td className="p-2">{e.cpf || e.cpf}</td>
-            <td className="p-2">{e.role || e.cargo}</td>
-            <td className="p-2">{e.dept || e.departamento}</td>
-            <td className="p-2">{e.salary ?? e.salario ?? "-"}</td>
-            <td className="p-2">{e.benefits || e.beneficios || "-"}</td>
-            <td className="p-2">{e.payroll || e.folha || "-"}</td>
+            <td className="p-2">{e.name}</td>
+            <td className="p-2">{e.cpf}</td>
+            <td className="p-2">{e.role}</td>
+            <td className="p-2">{e.dept}</td>
             <td className="p-2 flex gap-2">
               <button className="px-3 py-1 bg-slate-700 rounded hover:bg-cyan-600 transition" onClick={()=>onEdit(e)}>Editar</button>
               <button className="px-3 py-1 bg-red-600 rounded hover:bg-red-500 transition" onClick={()=>onDelete(e.id)}>Remover</button>
@@ -150,21 +142,18 @@ function Employees({ filteredEmployees, onEdit, onDelete, onAway }) {
   );
 }
 
-/* ================== AwayList ================== */
+// ================== AwayList ==================
 function AwayList({ away, employees, onRemove }) {
   if (!away.length) return <p className="text-slate-400">Nenhum afastamento registrado.</p>;
   return (
     <ul className="space-y-2">
       {away.map(a => {
-        // Os campos do backend podem ser empId/funcionario_id/funcionario
-        const empId = a.empId || a.funcionario_id || a.funcionarioId || a.funcionarioId;
-        const emp = employees.find(e => e.id === empId || e.id === (a.funcionario_id) || e.id === (a.empId));
-        const name = emp?.name || emp?.nome || a.funcionario || "[Ex-funcionário]";
+        const emp = employees.find(e => e.id === a.empId);
         return (
           <li key={a.id} className="bg-slate-800 p-4 rounded-xl flex justify-between items-center shadow-md">
             <div>
-              <p className="font-semibold">{name}</p>
-              <p className="text-slate-400 text-sm">{a.reason || a.motivo || "—"} — {a.fromDate || a.data_inicio} {a.toDate || a.data_fim ? `até ${a.toDate || a.data_fim}` : ""}</p>
+              <p className="font-semibold">{emp?.name || "[Ex-funcionário]"}</p>
+              <p className="text-slate-400 text-sm">{a.reason} — {a.fromDate} {a.toDate ? `até ${a.toDate}` : ""}</p>
             </div>
             <button className="px-3 py-1 bg-red-600 rounded hover:bg-red-500 transition" onClick={() => onRemove(a.id)}>Remover</button>
           </li>
@@ -174,12 +163,12 @@ function AwayList({ away, employees, onRemove }) {
   );
 }
 
-/* ================== CIPA Report ================== */
+// ================== CIPA Report ==================
 function CipaReport({ away }) {
   if (!away.length) return <p className="text-slate-400">Nenhum afastamento registrado.</p>;
 
   const stats = away.reduce((acc, a) => {
-    const cid = (a.reason || a.motivo || "Não informado");
+    const cid = a.reason || "Não informado";
     acc[cid] = (acc[cid] || 0) + 1;
     return acc;
   }, {});
@@ -236,67 +225,62 @@ function CipaReport({ away }) {
   );
 }
 
-/* ================== Employee Modal ================== */
+// ================== Employee Modal ==================
 function EmployeeModal({ show, onClose, formData, setFormData, onSave }) {
+  const [tab, setTab] = useState("dados");
   if (!show) return null;
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
       <form onSubmit={onSave} className="bg-slate-800 p-6 rounded-2xl w-full max-w-lg space-y-4 shadow-lg text-white">
         <h3 className="text-xl font-bold">{formData.id ? "Editar Funcionário" : "Novo Funcionário"}</h3>
 
-        {/* Tabs */}
-        <div className="flex mb-4 border-b border-slate-600">
-          <button type="button" onClick={()=>setFormData({...formData, _tab:"dados"})} className={`px-4 py-2 ${formData._tab==="dados" ? "border-b-2 border-cyan-400 font-semibold" : ""}`}>Dados Pessoais</button>
-          <button type="button" onClick={()=>setFormData({...formData, _tab:"profissional"})} className={`px-4 py-2 ${formData._tab==="profissional" ? "border-b-2 border-cyan-400 font-semibold" : ""}`}>Profissional</button>
-          <button type="button" onClick={()=>setFormData({...formData, _tab:"financeiro"})} className={`px-4 py-2 ${formData._tab==="financeiro" ? "border-b-2 border-cyan-400 font-semibold" : ""}`}>Financeiro</button>
+        {/* Abas */}
+        <div className="flex gap-2 mb-4">
+          <button type="button" onClick={()=>setTab("dados")} className={`px-3 py-1 rounded ${tab==="dados" ? "bg-cyan-500 text-white" : "bg-slate-700 text-slate-200"}`}>Dados</button>
+          <button type="button" onClick={()=>setTab("financeiro")} className={`px-3 py-1 rounded ${tab==="financeiro" ? "bg-cyan-500 text-white" : "bg-slate-700 text-slate-200"}`}>Financeiro</button>
         </div>
 
-        {/* Dados Pessoais */}
-        {(!formData._tab || formData._tab==="dados") && (
+        {/* Dados */}
+        {tab==="dados" && (
           <div className="space-y-3">
             <div>
               <label className="block mb-1 font-semibold">Nome</label>
-              <input className="w-full p-2 rounded bg-slate-700 text-white" type="text" value={formData.name || formData.nome || ""} onChange={e => setFormData({...formData, name: e.target.value})} />
+              <input className="w-full p-2 rounded bg-slate-700 text-white" type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
             </div>
             <div>
               <label className="block mb-1 font-semibold">CPF</label>
-              <input className="w-full p-2 rounded bg-slate-700 text-white" type="text" value={formData.cpf || ""} onChange={e => setFormData({...formData, cpf: e.target.value})} />
+              <input className="w-full p-2 rounded bg-slate-700 text-white" type="text" value={formData.cpf} onChange={e => setFormData({...formData, cpf: e.target.value})} />
             </div>
-            <div>
-              <label className="block mb-1 font-semibold">Data de admissão</label>
-              <input className="w-full p-2 rounded bg-slate-700 text-white" type="date" value={formData.adm || formData.data_admissao || ""} onChange={e => setFormData({...formData, adm: e.target.value})} />
-            </div>
-          </div>
-        )}
-
-        {/* Profissional */}
-        {formData._tab==="profissional" && (
-          <div className="space-y-3">
             <div>
               <label className="block mb-1 font-semibold">Cargo</label>
-              <input className="w-full p-2 rounded bg-slate-700 text-white" type="text" value={formData.role || formData.cargo || ""} onChange={e => setFormData({...formData, role: e.target.value})} />
+              <input className="w-full p-2 rounded bg-slate-700 text-white" type="text" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})} />
             </div>
             <div>
               <label className="block mb-1 font-semibold">Departamento</label>
-              <input className="w-full p-2 rounded bg-slate-700 text-white" type="text" value={formData.dept || formData.departamento || ""} onChange={e => setFormData({...formData, dept: e.target.value})} />
+              <input className="w-full p-2 rounded bg-slate-700 text-white" type="text" value={formData.dept} onChange={e => setFormData({...formData, dept: e.target.value})} />
+            </div>
+            <div>
+              <label className="block mb-1 font-semibold">Data de admissão</label>
+              <input className="w-full p-2 rounded bg-slate-700 text-white" type="date" value={formData.adm} onChange={e => setFormData({...formData, adm: e.target.value})} />
             </div>
           </div>
         )}
 
         {/* Financeiro */}
-        {formData._tab==="financeiro" && (
+        {tab==="financeiro" && (
           <div className="space-y-3">
             <div>
               <label className="block mb-1 font-semibold">Salário</label>
-              <input className="w-full p-2 rounded bg-slate-700 text-white" type="number" value={formData.salary ?? formData.salario ?? ""} onChange={e => setFormData({...formData, salary: e.target.value})} />
+              <input className="w-full p-2 rounded bg-slate-700 text-white" type="number" value={formData.salary} onChange={e => setFormData({...formData, salary: e.target.value})} />
             </div>
             <div>
-              <label className="block mb-1 font-semibold">Folha (ex: Mensal)</label>
-              <input className="w-full p-2 rounded bg-slate-700 text-white" type="text" value={formData.payroll || formData.folha || ""} onChange={e => setFormData({...formData, payroll: e.target.value})} />
+              <label className="block mb-1 font-semibold">Folha</label>
+              <input className="w-full p-2 rounded bg-slate-700 text-white" type="text" placeholder="Ex: Mensal, Quinzenal" value={formData.payroll || ""} onChange={e => setFormData({...formData, payroll: e.target.value})} />
             </div>
             <div>
               <label className="block mb-1 font-semibold">Benefícios</label>
-              <input className="w-full p-2 rounded bg-slate-700 text-white" type="text" value={formData.benefits || formData.beneficios || ""} onChange={e => setFormData({...formData, benefits: e.target.value})} />
+              <input className="w-full p-2 rounded bg-slate-700 text-white" type="text" placeholder="Vale transporte, VR/VA, etc." value={formData.benefits || ""} onChange={e => setFormData({...formData, benefits: e.target.value})} />
             </div>
           </div>
         )}
@@ -310,184 +294,84 @@ function EmployeeModal({ show, onClose, formData, setFormData, onSave }) {
   );
 }
 
-/* ================== App ================== */
+// ================== App ==================
 function App(){
   const [view, setView] = useState("dashboard");
   const [employees, setEmployees] = useState([]);
   const [away, setAway] = useState([]);
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState({ id:"", name:"", cpf:"", role:"", dept:"", salary:"", adm:"", payroll:"", benefits:"", _tab:"dados" });
+  const [formData, setFormData] = useState({id:"", name:"", cpf:"", role:"", dept:"", salary:"", adm:"", payroll:"", benefits:""});
 
-  // helpers to load from server
-  const loadEmployees = async () => {
+  // CARREGAR FUNCIONÁRIOS DO BACKEND
+  const fetchEmployees = async () => {
     try {
-      const res = await fetch(API + "/employees");
+      const res = await fetch("http://localhost:3000/employees");
       const data = await res.json();
-      setEmployees(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error("Erro ao carregar funcionários:", err);
-      setEmployees([]);
-    }
+      setEmployees(data);
+    } catch(err) { console.error(err); }
   };
 
-  const loadAway = async () => {
-    try {
-      const res = await fetch(API + "/away");
-      const data = await res.json();
-      setAway(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error("Erro ao carregar afastamentos:", err);
-      setAway([]);
-    }
-  };
+  useEffect(()=> { fetchEmployees(); }, []);
 
-  useEffect(()=> {
-    loadEmployees();
-    loadAway();
-  }, []);
-
-  const filteredEmployees = employees.filter(e => (e.name || e.nome || "").toLowerCase().includes(search.toLowerCase()));
+  const filteredEmployees = employees.filter(e => e.name.toLowerCase().includes(search.toLowerCase()));
   const currentAway = away.filter(a => {
     const now = new Date();
-    const f = new Date(a.fromDate || a.data_inicio);
-    const t = a.toDate ? new Date(a.toDate) : (a.data_fim ? new Date(a.data_fim) : f);
+    const f = new Date(a.fromDate);
+    const t = a.toDate ? new Date(a.toDate) : f;
     return f <= now && now <= t;
   });
 
   const handleSave = async e => {
     e.preventDefault();
-    if (!formData.name && !formData.nome) return alert("Nome obrigatório");
-
-    // prepare payload with both pt/en keys so backend matches in either style
-    const payload = {
-      // name variants
-      name: formData.name || formData.nome || "",
-      nome: formData.name || formData.nome || "",
-      cpf: formData.cpf || "",
-      // role / cargo
-      role: formData.role || formData.cargo || "",
-      cargo: formData.role || formData.cargo || "",
-      // dept
-      dept: formData.dept || formData.departamento || "",
-      departamento: formData.dept || formData.departamento || "",
-      // salary / folha / benefits
-      salary: formData.salary || formData.salario || "",
-      salario: formData.salary || formData.salario || "",
-      payroll: formData.payroll || formData.folha || "",
-      folha: formData.payroll || formData.folha || "",
-      benefits: formData.benefits || formData.beneficios || "",
-      beneficios: formData.benefits || formData.beneficios || "",
-      // admissão
-      adm: formData.adm || formData.data_admissao || "",
-      data_admissao: formData.adm || formData.data_admissao || ""
-    };
+    if (!formData.name) return;
 
     try {
       if (formData.id) {
-        await fetch(API + "/employees/" + formData.id, {
+        // UPDATE
+        const res = await fetch(`http://localhost:3000/employees/${formData.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(formData)
         });
+        if (res.ok) fetchEmployees();
       } else {
-        await fetch(API + "/employees", {
+        // CREATE
+        const res = await fetch("http://localhost:3000/employees", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(formData)
         });
+        if (res.ok) fetchEmployees();
       }
-      await loadEmployees();
-      setFormData({ id:"", name:"", cpf:"", role:"", dept:"", salary:"", adm:"", payroll:"", benefits:"", _tab:"dados" });
       setShowModal(false);
-    } catch (err) {
-      console.error("Erro ao salvar:", err);
-      alert("Erro ao salvar. Veja o console.");
-    }
+      setFormData({id:"", name:"", cpf:"", role:"", dept:"", salary:"", adm:"", payroll:"", benefits:""});
+    } catch(err) { console.error(err); }
   };
 
+  const handleEdit = emp => { setFormData(emp); setShowModal(true); };
   const handleDelete = async id => {
-    if (!confirm("Remover funcionário?")) return;
-    try {
-      await fetch(API + "/employees/" + id, { method: "DELETE" });
-      await loadEmployees();
-      // remove related away if backend didn't cascade
-      await loadAway();
-    } catch (err) {
-      console.error("Erro ao remover:", err);
-      alert("Erro ao remover. Veja o console.");
-    }
+    try { await fetch(`http://localhost:3000/employees/${id}`, { method:"DELETE" }); fetchEmployees(); } 
+    catch(err){ console.error(err);}
   };
-
-  const handleEdit = emp => {
-    // normaliza para formData
-    setFormData({
-      id: emp.id,
-      name: emp.name || emp.nome || "",
-      cpf: emp.cpf || "",
-      role: emp.role || emp.cargo || "",
-      dept: emp.dept || emp.departamento || "",
-      salary: emp.salary ?? emp.salario ?? "",
-      payroll: emp.payroll || emp.folha || "",
-      benefits: emp.benefits || emp.beneficios || "",
-      adm: emp.adm || emp.data_admissao || "",
-      _tab: "dados"
-    });
-    setShowModal(true);
+  const handleAway = empId => {
+    const reason = prompt("Motivo do afastamento?");
+    const from = prompt("Data inicial (YYYY-MM-DD)?");
+    const to = prompt("Data final (opcional YYYY-MM-DD)?");
+    if (!reason || !from) return;
+    setAway([...away, {id:crypto.randomUUID(), empId, reason, fromDate:from, toDate:to || null}]);
   };
-
-  const registerAway = async empId => {
-    const fromDate = prompt("Data início (YYYY-MM-DD):", new Date().toISOString().slice(0,10));
-    if (!fromDate) return;
-    const toDate = prompt("Data fim (opcional):", "");
-    const reason = prompt("Motivo/CID:", "CID-10 F32 - Depressão");
-
-    // Try to send both variants to maximize backend compatibility
-    const payload = {
-      empId,
-      funcionario_id: empId,
-      fromDate,
-      data_inicio: fromDate,
-      toDate: toDate || null,
-      data_fim: toDate || null,
-      reason,
-      motivo: reason
-    };
-
-    try {
-      await fetch(API + "/away", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      await loadAway();
-    } catch (err) {
-      console.error("Erro ao registrar afastamento:", err);
-      alert("Erro ao registrar afastamento. Veja o console.");
-    }
-  };
-
-  const removeAway = async id => {
-    if (!confirm("Remover afastamento?")) return;
-    try {
-      await fetch(API + "/away/" + id, { method: "DELETE" });
-      await loadAway();
-    } catch (err) {
-      console.error("Erro ao remover afastamento:", err);
-      alert("Erro ao remover afastamento. Veja o console.");
-    }
-  };
+  const handleRemoveAway = id => { setAway(away.filter(a => a.id!==id)); };
 
   return (
     <div className="flex min-h-screen">
-      <Sidebar view={view} setView={setView} search={search} setSearch={setSearch} onAdd={()=>{ setFormData({...formData, _tab:"dados"}); setShowModal(true);} } employees={employees} away={away}/>
+      <Sidebar view={view} setView={setView} search={search} setSearch={setSearch} onAdd={()=>setShowModal(true)} employees={employees} away={away}/>
       <main className="flex-1 p-6 overflow-y-auto">
         {view==="dashboard" && <Dashboard employees={employees} currentAway={currentAway} />}
-        {view==="funcionarios" && <Employees filteredEmployees={filteredEmployees} onEdit={handleEdit} onDelete={handleDelete} onAway={registerAway} />}
-        {view==="ferias" && <AwayList away={away} employees={employees} onRemove={removeAway} />}
+        {view==="funcionarios" && <Employees filteredEmployees={filteredEmployees} onEdit={handleEdit} onDelete={handleDelete} onAway={handleAway} />}
+        {view==="ferias" && <AwayList away={away} employees={employees} onRemove={handleRemoveAway} />}
         {view==="cipa" && <CipaReport away={away} />}
       </main>
-
       <EmployeeModal show={showModal} onClose={()=>setShowModal(false)} formData={formData} setFormData={setFormData} onSave={handleSave} />
     </div>
   );
