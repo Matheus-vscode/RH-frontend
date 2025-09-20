@@ -67,14 +67,14 @@ function Sidebar({ view, setView, search, setSearch, onAdd, employees, away }) {
           className="w-full px-3 py-2 bg-gradient-to-r from-cyan-500 to-purple-600 text-white rounded-lg hover:scale-105 transition shadow-md font-semibold"
           onClick={() => exportCSV("funcionarios.csv", employees)}
         >
-          ⬇ Exportar Funcionários
+          ⬇️ Exportar Funcionários
         </button>
 
         <button
           className="w-full px-3 py-2 bg-gradient-to-r from-cyan-500 to-purple-600 text-white rounded-lg hover:scale-105 transition shadow-md font-semibold"
           onClick={() => exportCSV("afastamentos.csv", away)}
         >
-          ⬇ Exportar Afastamentos
+          ⬇️ Exportar Afastamentos
         </button>
       </div>
 
@@ -153,7 +153,7 @@ function AwayList({ away, employees, onRemove }) {
           <li key={a.id} className="bg-slate-800 p-4 rounded-xl flex justify-between items-center shadow-md">
             <div>
               <p className="font-semibold">{emp?.name || "[Ex-funcionário]"}</p>
-              <p className="text-slate-400 text-sm">{a.reason} — {a.fromDate} {a.toDate ? até ${a.toDate} : ""}</p>
+              <p className="text-slate-400 text-sm">{a.reason} — {a.fromDate} {a.toDate ? `até ${a.toDate}` : ""}</p>
             </div>
             <button className="px-3 py-1 bg-red-600 rounded hover:bg-red-500 transition" onClick={() => onRemove(a.id)}>Remover</button>
           </li>
@@ -179,10 +179,10 @@ function CipaReport({ away }) {
   Object.keys(stats).forEach(cid => {
     const cLower = cid.toLowerCase();
     if (cLower.includes("depress") || cLower.includes("f32") || cLower.includes("psic")) {
-      alertas.push(⚠ CID "${cid}": possível problema psicológico. Ação: apoio psicológico/palestra.);
+      alertas.push(`⚠️ CID "${cid}": possível problema psicológico. Ação: apoio psicológico/palestra.`);
       rowColors[cid] = "bg-yellow-100 text-yellow-900";
     } else if (cLower.includes("acidente") || cLower.includes("s72") || cLower.includes("trauma")) {
-      alertas.push(⚠ CID "${cid}": acidente de trabalho. Ação: revisar segurança.);
+      alertas.push(`⚠️ CID "${cid}": acidente de trabalho. Ação: revisar segurança.`);
       rowColors[cid] = "bg-red-100 text-red-900";
     } else {
       rowColors[cid] = "bg-slate-700 text-slate-100";
@@ -203,7 +203,7 @@ function CipaReport({ away }) {
           </thead>
           <tbody>
             {Object.entries(stats).map(([cid, qtd], i) => (
-              <tr key={i} className={${rowColors[cid] || "bg-slate-700 text-white"} border-b border-slate-600}>
+              <tr key={i} className={`${rowColors[cid] || "bg-slate-700 text-white"} border-b border-slate-600`}>
                 <td className="px-4 py-2">{cid}</td>
                 <td className="px-4 py-2">{qtd}</td>
               </tr>
@@ -214,7 +214,7 @@ function CipaReport({ away }) {
 
       {alertas.length > 0 && (
         <div className="bg-red-600/20 border border-red-500 rounded-lg p-4 space-y-2 text-white">
-          <h3 className="font-bold text-lg">⚠ Recomendações:</h3>
+          <h3 className="font-bold text-lg">⚠️ Recomendações:</h3>
           <ul className="list-disc pl-5 space-y-1">
             {alertas.map((a,i) => <li key={i}>{a}</li>)}
           </ul>
@@ -237,8 +237,8 @@ function EmployeeModal({ show, onClose, formData, setFormData, onSave }) {
 
         {/* Abas */}
         <div className="flex gap-2 mb-4">
-          <button type="button" onClick={()=>setTab("dados")} className={px-3 py-1 rounded ${tab==="dados" ? "bg-cyan-500 text-white" : "bg-slate-700 text-slate-200"}}>Dados</button>
-          <button type="button" onClick={()=>setTab("financeiro")} className={px-3 py-1 rounded ${tab==="financeiro" ? "bg-cyan-500 text-white" : "bg-slate-700 text-slate-200"}}>Financeiro</button>
+          <button type="button" onClick={()=>setTab("dados")} className={`px-3 py-1 rounded ${tab==="dados" ? "bg-cyan-500 text-white" : "bg-slate-700 text-slate-200"}`}>Dados</button>
+          <button type="button" onClick={()=>setTab("financeiro")} className={`px-3 py-1 rounded ${tab==="financeiro" ? "bg-cyan-500 text-white" : "bg-slate-700 text-slate-200"}`}>Financeiro</button>
         </div>
 
         {/* Dados */}
@@ -367,4 +367,5 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 </body>
 </html>
+
 
