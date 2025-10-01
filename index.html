@@ -14,7 +14,76 @@
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
 <script type="text/babel">
-const { useState, useEffect } = React;
+const { useState, useEffect, useRef } = React;
+
+/* ================== LOGIN ================== */
+function Login({ onLogin }) {
+  const [usuario, setUsuario] = useState("");
+  const [senha, setSenha] = useState("");
+  const [erro, setErro] = useState("");
+  const [tentativas, setTentativas] = useState(0);
+  const maxTentativas = 3;
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if(tentativas >= maxTentativas) {
+      setErro("Conta bloqueada após 3 tentativas.");
+      return;
+    }
+    if (usuario === "admin" && senha === "1234") {
+      onLogin();
+    } else {
+      setTentativas(prev => prev + 1);
+      setErro(Usuário ou senha inválidos. Tentativa ${tentativas+1} de ${maxTentativas}.);
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-center h-screen bg-gradient-to-r from-cyan-700 to-purple-800">
+      <div className="bg-slate-900 p-8 rounded-2xl shadow-xl w-full max-w-md">
+        <h1 className="text-2xl font-bold text-cyan-400 text-center mb-6">🔐 Acesso ao Sistema RH • CIPA</h1>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block mb-1 font-semibold">Usuário</label>
+            <input
+              type="text"
+              value={usuario}
+              onChange={(e) => setUsuario(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg bg-slate-800 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400"
+              placeholder="Digite seu usuário"
+              disabled={tentativas>=maxTentativas}
+            />
+          </div>
+          <div>
+            <label className="block mb-1 font-semibold">Senha</label>
+            <input
+              type="password"
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg bg-slate-800 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400"
+              placeholder="Digite sua senha"
+              disabled={tentativas>=maxTentativas}
+            />
+          </div>
+          {erro && <p className="text-red-500 text-sm">{erro}</p>}
+          <button type="submit" className="w-full py-2 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-lg font-semibold hover:scale-105 transition" disabled={tentativas>=maxTentativas}>
+            Entrar
+          </button>
+        </form>
+
+        <div className="mt-6 text-sm text-slate-300">
+          <h3 className="font-bold text-cyan-400 mb-2">📌 Instruções de acesso:</h3>
+          <ul className="list-disc pl-5 space-y-1">
+            <li>Usuário padrão: <b>admin</b></li>
+            <li>Senha padrão: <b>1234</b></li>
+            <li>Após 3 tentativas incorretas, o sistema bloqueia.</li>
+            <li>Entre em contato com o administrador para suporte.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 /* ================== Export CSV ================== */
 function exportCSV(filename, rows) {
@@ -67,14 +136,14 @@ function Sidebar({ view, setView, search, setSearch, onAdd, employees, away }) {
           className="w-full px-3 py-2 bg-gradient-to-r from-cyan-500 to-purple-600 text-white rounded-lg hover:scale-105 transition shadow-md font-semibold"
           onClick={() => exportCSV("funcionarios.csv", employees)}
         >
-          ⬇️ Exportar Funcionários
+          ⬇ Exportar Funcionários
         </button>
 
         <button
           className="w-full px-3 py-2 bg-gradient-to-r from-cyan-500 to-purple-600 text-white rounded-lg hover:scale-105 transition shadow-md font-semibold"
           onClick={() => exportCSV("afastamentos.csv", away)}
         >
-          ⬇️ Exportar Afastamentos
+          ⬇ Exportar Afastamentos
         </button>
       </div>
 
@@ -143,7 +212,7 @@ function Employees({ filteredEmployees, onEdit, onDelete, onAway }) {
 }
 
 /* ================== AwayList ================== */
-function AwayList({ away, employees, onRemove }) {
+function AwayList({ away, employees, onRemove, onEdit }) {
   if (!away.length) return <p className="text-slate-400">Nenhum afastamento registrado.</p>;
   return (
     <ul className="space-y-2">
@@ -153,9 +222,12 @@ function AwayList({ away, employees, onRemove }) {
           <li key={a.id} className="bg-slate-800 p-4 rounded-xl flex justify-between items-center shadow-md">
             <div>
               <p className="font-semibold">{emp?.name || "[Ex-funcionário]"}</p>
-              <p className="text-slate-400 text-sm">{a.reason} — {a.fromDate} {a.toDate ? `até ${a.toDate}` : ""}</p>
+              <p className="text-slate-400 text-sm">{a.reason} — {a.fromDate} {a.toDate ? até ${a.toDate} : ""}</p>
             </div>
-            <button className="px-3 py-1 bg-red-600 rounded hover:bg-red-500 transition" onClick={() => onRemove(a.id)}>Remover</button>
+            <div className="flex gap-2">
+              <button className="px-3 py-1 bg-yellow-600 rounded hover:bg-yellow-500 transition" onClick={()=>onEdit(a)}>Editar</button>
+              <button className="px-3 py-1 bg-red-600 rounded hover:bg-red-500 transition" onClick={() => onRemove(a.id)}>Remover</button>
+            </div>
           </li>
         );
       })}
@@ -179,10 +251,10 @@ function CipaReport({ away }) {
   Object.keys(stats).forEach(cid => {
     const cLower = cid.toLowerCase();
     if (cLower.includes("depress") || cLower.includes("f32") || cLower.includes("psic")) {
-      alertas.push(`⚠️ CID "${cid}": possível problema psicológico. Ação: apoio psicológico/palestra.`);
+      alertas.push(⚠ CID "${cid}": possível problema psicológico. Ação: apoio psicológico/palestra.);
       rowColors[cid] = "bg-yellow-100 text-yellow-900";
     } else if (cLower.includes("acidente") || cLower.includes("s72") || cLower.includes("trauma")) {
-      alertas.push(`⚠️ CID "${cid}": acidente de trabalho. Ação: revisar segurança.`);
+      alertas.push(⚠ CID "${cid}": acidente de trabalho. Ação: revisar segurança.);
       rowColors[cid] = "bg-red-100 text-red-900";
     } else {
       rowColors[cid] = "bg-slate-700 text-slate-100";
@@ -203,7 +275,7 @@ function CipaReport({ away }) {
           </thead>
           <tbody>
             {Object.entries(stats).map(([cid, qtd], i) => (
-              <tr key={i} className={`${rowColors[cid] || "bg-slate-700 text-white"} border-b border-slate-600`}>
+              <tr key={i} className={${rowColors[cid] || "bg-slate-700 text-white"} border-b border-slate-600}>
                 <td className="px-4 py-2">{cid}</td>
                 <td className="px-4 py-2">{qtd}</td>
               </tr>
@@ -214,7 +286,7 @@ function CipaReport({ away }) {
 
       {alertas.length > 0 && (
         <div className="bg-red-600/20 border border-red-500 rounded-lg p-4 space-y-2 text-white">
-          <h3 className="font-bold text-lg">⚠️ Recomendações:</h3>
+          <h3 className="font-bold text-lg">⚠ Recomendações:</h3>
           <ul className="list-disc pl-5 space-y-1">
             {alertas.map((a,i) => <li key={i}>{a}</li>)}
           </ul>
@@ -228,68 +300,53 @@ function CipaReport({ away }) {
 /* ================== Employee Modal ================== */
 function EmployeeModal({ show, onClose, formData, setFormData, onSave }) {
   const [tab, setTab] = useState("dados");
+  const modalRef = useRef();
+
+  const handleClickOutside = (e) => {
+    if(modalRef.current && !modalRef.current.contains(e.target)) onClose();
+  };
 
   useEffect(()=> {
-    // ao abrir modal exibir aba de dados por padrão
-    if (show) setTab("dados");
-  }, [show]);
+    document.addEventListener("mousedown", handleClickOutside);
+    return ()=> document.removeEventListener("mousedown", handleClickOutside);
+  });
 
   if (!show) return null;
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if(!formData.name || !formData.cpf || !formData.role || !formData.dept){
+      alert("Preencha os campos obrigatórios: Nome, CPF, Cargo e Departamento.");
+      return;
+    }
+    onSave(e);
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-      <form onSubmit={onSave} className="bg-slate-800 p-6 rounded-2xl w-full max-w-lg space-y-4 shadow-lg text-white">
+      <form ref={modalRef} onSubmit={handleSubmit} className="bg-slate-800 p-6 rounded-2xl w-full max-w-lg space-y-4 shadow-lg text-white">
         <h3 className="text-xl font-bold">{formData.id ? "Editar Funcionário" : "Novo Funcionário"}</h3>
 
         <div className="flex gap-2 mb-4">
-          <button type="button" onClick={()=>setTab("dados")} className={`px-3 py-1 rounded ${tab==="dados" ? "bg-cyan-500 text-white" : "bg-slate-700 text-slate-200"}`}>Dados</button>
-          <button type="button" onClick={()=>setTab("financeiro")} className={`px-3 py-1 rounded ${tab==="financeiro" ? "bg-cyan-500 text-white" : "bg-slate-700 text-slate-200"}`}>Financeiro</button>
+          <button type="button" onClick={()=>setTab("dados")} className={px-3 py-1 rounded ${tab==="dados" ? "bg-cyan-500 text-white" : "bg-slate-700 text-slate-200"}}>Dados</button>
+          <button type="button" onClick={()=>setTab("financeiro")} className={px-3 py-1 rounded ${tab==="financeiro" ? "bg-cyan-500 text-white" : "bg-slate-700 text-slate-200"}}>Financeiro</button>
         </div>
 
         {tab==="dados" && (
           <div className="space-y-3">
-            <div>
-              <label className="block mb-1 font-semibold">Nome</label>
-              <input className="w-full p-2 rounded bg-slate-700 text-white" type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
-            </div>
-
-            <div>
-              <label className="block mb-1 font-semibold">CPF</label>
-              <input className="w-full p-2 rounded bg-slate-700 text-white" type="text" value={formData.cpf} onChange={e => setFormData({...formData, cpf: e.target.value})} />
-            </div>
-
-            <div>
-              <label className="block mb-1 font-semibold">Cargo</label>
-              <input className="w-full p-2 rounded bg-slate-700 text-white" type="text" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})} />
-            </div>
-
-            <div>
-              <label className="block mb-1 font-semibold">Departamento</label>
-              <input className="w-full p-2 rounded bg-slate-700 text-white" type="text" value={formData.dept} onChange={e => setFormData({...formData, dept: e.target.value})} />
-            </div>
-
-            <div>
-              <label className="block mb-1 font-semibold">Data de admissão</label>
-              <input className="w-full p-2 rounded bg-slate-700 text-white" type="date" value={formData.adm} onChange={e => setFormData({...formData, adm: e.target.value})} />
-            </div>
+            <div><label className="block mb-1 font-semibold">Nome *</label><input className="w-full p-2 rounded bg-slate-700 text-white" type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} /></div>
+            <div><label className="block mb-1 font-semibold">CPF *</label><input className="w-full p-2 rounded bg-slate-700 text-white" type="text" value={formData.cpf} onChange={e => setFormData({...formData, cpf: e.target.value})} /></div>
+            <div><label className="block mb-1 font-semibold">Cargo *</label><input className="w-full p-2 rounded bg-slate-700 text-white" type="text" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})} /></div>
+            <div><label className="block mb-1 font-semibold">Departamento *</label><input className="w-full p-2 rounded bg-slate-700 text-white" type="text" value={formData.dept} onChange={e => setFormData({...formData, dept: e.target.value})} /></div>
+            <div><label className="block mb-1 font-semibold">Data de admissão</label><input className="w-full p-2 rounded bg-slate-700 text-white" type="date" value={formData.adm} onChange={e => setFormData({...formData, adm: e.target.value})} /></div>
           </div>
         )}
 
         {tab==="financeiro" && (
           <div className="space-y-3">
-            <div>
-              <label className="block mb-1 font-semibold">Salário</label>
-              <input className="w-full p-2 rounded bg-slate-700 text-white" type="number" value={formData.salary} onChange={e => setFormData({...formData, salary: e.target.value})} />
-            </div>
-
-            <div>
-              <label className="block mb-1 font-semibold">Folha</label>
-              <input className="w-full p-2 rounded bg-slate-700 text-white" type="text" placeholder="Ex: Mensal, Quinzenal" value={formData.payroll || ""} onChange={e => setFormData({...formData, payroll: e.target.value})} />
-            </div>
-
-            <div>
-              <label className="block mb-1 font-semibold">Benefícios</label>
-              <input className="w-full p-2 rounded bg-slate-700 text-white" type="text" placeholder="Vale transporte, VR/VA, etc." value={formData.benefits || ""} onChange={e => setFormData({...formData, benefits: e.target.value})} />
-            </div>
+            <div><label className="block mb-1 font-semibold">Salário</label><input className="w-full p-2 rounded bg-slate-700 text-white" type="number" value={formData.salary} onChange={e => setFormData({...formData, salary: e.target.value})} /></div>
+            <div><label className="block mb-1 font-semibold">Folha</label><input className="w-full p-2 rounded bg-slate-700 text-white" type="text" placeholder="Ex: Mensal, Quinzenal" value={formData.payroll || ""} onChange={e => setFormData({...formData, payroll: e.target.value})} /></div>
+            <div><label className="block mb-1 font-semibold">Benefícios</label><input className="w-full p-2 rounded bg-slate-700 text-white" type="text" placeholder="Vale transporte, VR/VA, etc." value={formData.benefits || ""} onChange={e => setFormData({...formData, benefits: e.target.value})} /></div>
           </div>
         )}
 
@@ -302,41 +359,79 @@ function EmployeeModal({ show, onClose, formData, setFormData, onSave }) {
   );
 }
 
-/* ================== App ================== */
+/* ================== Away Modal ================== */
+function AwayModal({ show, onClose, formData, setFormData, onSave, employees }) {
+  const modalRef = useRef();
+
+  const handleClickOutside = (e) => {
+    if(modalRef.current && !modalRef.current.contains(e.target)) onClose();
+  };
+
+  useEffect(()=> {
+    document.addEventListener("mousedown", handleClickOutside);
+    return ()=> document.removeEventListener("mousedown", handleClickOutside);
+  });
+
+  if (!show) return null;
+
+  const handleSubmit = e => {
+    e.preventDefault();
+    if(!formData.reason || !formData.fromDate){
+      alert("Preencha os campos obrigatórios: Motivo e Data início.");
+      return;
+    }
+    onSave(e);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+      <form ref={modalRef} onSubmit={handleSubmit} className="bg-slate-800 p-6 rounded-2xl w-full max-w-lg space-y-4 shadow-lg text-white">
+        <h3 className="text-xl font-bold">{formData.id ? "Editar Afastamento" : "Novo Afastamento"}</h3>
+
+        <div className="space-y-3">
+          <div>
+            <label className="block mb-1 font-semibold">Funcionário *</label>
+            <select className="w-full p-2 rounded bg-slate-700 text-white" value={formData.empId} onChange={e=>setFormData({...formData, empId:e.target.value})} required>
+              <option value="">Selecione...</option>
+              {employees.map(emp=><option key={emp.id} value={emp.id}>{emp.name}</option>)}
+            </select>
+          </div>
+          <div><label className="block mb-1 font-semibold">Motivo / CID *</label><input className="w-full p-2 rounded bg-slate-700 text-white" type="text" value={formData.reason} onChange={e => setFormData({...formData, reason:e.target.value})} /></div>
+          <div><label className="block mb-1 font-semibold">Data início *</label><input className="w-full p-2 rounded bg-slate-700 text-white" type="date" value={formData.fromDate} onChange={e => setFormData({...formData, fromDate:e.target.value})} /></div>
+          <div><label className="block mb-1 font-semibold">Data fim (opcional)</label><input className="w-full p-2 rounded bg-slate-700 text-white" type="date" value={formData.toDate || ""} onChange={e => setFormData({...formData, toDate:e.target.value})} /></div>
+        </div>
+
+        <div className="flex justify-end gap-2">
+          <button type="button" className="px-3 py-1 bg-slate-600 rounded hover:bg-slate-500 transition" onClick={onClose}>Cancelar</button>
+          <button type="submit" className="px-3 py-1 bg-gradient-to-r from-cyan-500 to-purple-600 rounded hover:opacity-90 transition">Salvar</button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+/* ================== APP ================== */
 function App(){
   const [view, setView] = useState("dashboard");
   const [employees, setEmployees] = useState([]);
   const [away, setAway] = useState([]);
   const [search, setSearch] = useState("");
-  const [showModal, setShowModal] = useState(false);
-  const initialForm = {id:"", name:"", cpf:"", role:"", dept:"", salary:"", adm:"", payroll:"", benefits:""};
-  const [formData, setFormData] = useState(initialForm);
-
-  // BUSCAR FUNCIONÁRIOS NO BACKEND
-  const fetchEmployees = async () => {
-    try {
-      const res = await fetch("http://localhost:3000/employees");
-      if (!res.ok) throw new Error("Erro ao buscar funcionários");
-      const data = await res.json();
-      setEmployees(data || []);
-    } catch (err) {
-      console.error("fetchEmployees:", err);
-      // fallback: manter estado atual (ou limpar)
-      // setEmployees([]);
-      alert("Não foi possível carregar funcionários do backend. Verifique se o servidor está rodando.");
-    }
-  };
+  const [showEmpModal, setShowEmpModal] = useState(false);
+  const [showAwayModal, setShowAwayModal] = useState(false);
+  const [empForm, setEmpForm] = useState({id:"", name:"", cpf:"", role:"", dept:"", salary:"", adm:"", payroll:"", benefits:""});
+  const [awayForm, setAwayForm] = useState({id:"", empId:"", reason:"", fromDate:"", toDate:""});
 
   useEffect(()=> {
-    // carregar do backend e carregar afastamentos do localStorage
-    fetchEmployees();
+    const empLS = localStorage.getItem("employees");
+    if (empLS) setEmployees(JSON.parse(empLS));
     const awayLS = localStorage.getItem("away");
     if (awayLS) setAway(JSON.parse(awayLS));
   }, []);
 
+  useEffect(()=> localStorage.setItem("employees", JSON.stringify(employees)), [employees]);
   useEffect(()=> localStorage.setItem("away", JSON.stringify(away)), [away]);
 
-  const filteredEmployees = employees.filter(e => (e.name || "").toLowerCase().includes(search.toLowerCase()));
+  const filteredEmployees = employees.filter(e => e.name.toLowerCase().includes(search.toLowerCase()));
   const currentAway = away.filter(a => {
     const now = new Date();
     const f = new Date(a.fromDate);
@@ -344,107 +439,63 @@ function App(){
     return f <= now && now <= t;
   });
 
-  // ==== ALTERAÇÃO PRINCIPAL: salvar usando backend ====
-  const handleSave = async e => {
+  /* ======= Funcionario ======= */
+  const handleSaveEmp = e => {
     e.preventDefault();
-
-    if (!formData.name && !formData.cpf) {
-      alert("Preencha pelo menos o nome ou CPF.");
-      return;
+    const newData = {...empForm, salary: parseFloat(empForm.salary) || 0};
+    if (empForm.id) {
+      setEmployees(employees.map(emp => emp.id === empForm.id ? newData : emp));
+    } else {
+      setEmployees([...employees, {...newData, id: crypto.randomUUID()}]);
     }
+    setEmpForm({id:"", name:"", cpf:"", role:"", dept:"", salary:"", adm:"", payroll:"", benefits:""});
+    setShowEmpModal(false);
+    alert("Funcionário salvo com sucesso!");
+  };
+  const handleEditEmp = e => { setEmpForm(e); setShowEmpModal(true); };
+  const handleDeleteEmp = id => { if(confirm("Remover funcionário?")) setEmployees(employees.filter(e=>e.id!==id)); };
 
-    const payload = {
-      ...formData,
-      salary: formData.salary === "" ? 0 : parseFloat(formData.salary)
-    };
-
-    try {
-      if (formData.id) {
-        // UPDATE
-        const res = await fetch(`http://localhost:3000/employees/${formData.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-        if (!res.ok) throw new Error("Erro ao atualizar funcionário");
-      } else {
-        // CREATE
-        const res = await fetch("http://localhost:3000/employees", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-        if (!res.ok) throw new Error("Erro ao criar funcionário");
-      }
-
-      // recarrega do backend para manter sincronizado
-      await fetchEmployees();
-
-      // resetar formulário e fechar modal
-      setFormData(initialForm);
-      setShowModal(false);
-    } catch (err) {
-      console.error(err);
-      alert("Erro ao salvar funcionário: " + err.message);
+  /* ======= Afastamento ======= */
+  const handleAddAway = empId => {
+    setAwayForm({id:"", empId, reason:"", fromDate:new Date().toISOString().slice(0,10), toDate:""});
+    setShowAwayModal(true);
+  };
+  const handleEditAway = a => { setAwayForm(a); setShowAwayModal(true); };
+  const handleSaveAway = e => {
+    e.preventDefault();
+    if (awayForm.id) {
+      setAway(away.map(a=>a.id===awayForm.id?awayForm:a));
+    } else {
+      setAway([...away,{...awayForm,id:crypto.randomUUID()}]);
     }
+    setAwayForm({id:"", empId:"", reason:"", fromDate:"", toDate:""});
+    setShowAwayModal(false);
+    alert("Afastamento salvo com sucesso!");
   };
-
-  const handleDelete = async id => {
-    if (!confirm("Remover funcionário?")) return;
-    try {
-      const res = await fetch(`http://localhost:3000/employees/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Erro ao remover");
-      await fetchEmployees();
-    } catch (err) {
-      console.error(err);
-      alert("Erro ao remover funcionário: " + err.message);
-    }
-  };
-
-  const handleEdit = emp => { setFormData(emp); setShowModal(true); };
-
-  const registerAway = empId => {
-    const fromDate = prompt("Data início (YYYY-MM-DD):", new Date().toISOString().slice(0,10));
-    if (!fromDate) return;
-    const toDate = prompt("Data fim (opcional):", "");
-    const reason = prompt("Motivo/CID:", "CID-10 F32 - Depressão");
-    setAway([...away, { id: crypto.randomUUID(), empId, fromDate, toDate: toDate || null, reason }]);
-  };
-
-  const removeAway = id => setAway(away.filter(a => a.id !== id));
+  const handleRemoveAway = id => setAway(away.filter(a=>a.id!==id));
 
   return (
-    <div className="flex min-h-screen">
-      <Sidebar
-        view={view}
-        setView={setView}
-        search={search}
-        setSearch={setSearch}
-        onAdd={() => { setFormData(initialForm); setShowModal(true); }}
-        employees={employees}
-        away={away}
-      />
-
-      <main className="flex-1 p-6 overflow-y-auto">
-        {view==="dashboard" && <Dashboard employees={employees} currentAway={currentAway} />}
-        {view==="funcionarios" && <Employees filteredEmployees={filteredEmployees} onEdit={handleEdit} onDelete={handleDelete} onAway={registerAway} />}
-        {view==="ferias" && <AwayList away={away} employees={employees} onRemove={removeAway} />}
-        {view==="cipa" && <CipaReport away={away} />}
+    <div className="flex h-screen">
+      <Sidebar view={view} setView={setView} search={search} setSearch={setSearch} onAdd={()=>setShowEmpModal(true)} employees={employees} away={away}/>
+      <main className="flex-1 p-6 overflow-auto">
+        {view==="dashboard" && <Dashboard employees={employees} currentAway={currentAway}/>}
+        {view==="funcionarios" && <Employees filteredEmployees={filteredEmployees} onEdit={handleEditEmp} onDelete={handleDeleteEmp} onAway={handleAddAway}/>}
+        {view==="ferias" && <AwayList away={away} employees={employees} onRemove={handleRemoveAway} onEdit={handleEditAway}/>}
+        {view==="cipa" && <CipaReport away={away}/>}
       </main>
-
-      <EmployeeModal
-        show={showModal}
-        onClose={() => setShowModal(false)}
-        formData={formData}
-        setFormData={setFormData}
-        onSave={handleSave}
-      />
+      <EmployeeModal show={showEmpModal} onClose={()=>setShowEmpModal(false)} formData={empForm} setFormData={setEmpForm} onSave={handleSaveEmp}/>
+      <AwayModal show={showAwayModal} onClose={()=>setShowAwayModal(false)} formData={awayForm} setFormData={setAwayForm} onSave={handleSaveAway} employees={employees}/>
     </div>
   );
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+/* ================== Root com Login ================== */
+function Root(){
+  const [logged, setLogged] = useState(false);
+  return logged ? <App/> : <Login onLogin={()=>setLogged(true)}/>;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<Root/>);
 </script>
 </body>
 </html>
-
