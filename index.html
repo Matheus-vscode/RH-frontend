@@ -34,7 +34,7 @@ function Login({ onLogin }) {
       onLogin();
     } else {
       setTentativas(prev => prev + 1);
-      setErro(Usuário ou senha inválidos. Tentativa ${tentativas+1} de ${maxTentativas}.);
+      setErro(`Usuário ou senha inválidos. Tentativa ${tentativas+1} de ${maxTentativas}.`);
     }
   };
 
@@ -222,7 +222,7 @@ function AwayList({ away, employees, onRemove, onEdit }) {
           <li key={a.id} className="bg-slate-800 p-4 rounded-xl flex justify-between items-center shadow-md">
             <div>
               <p className="font-semibold">{emp?.name || "[Ex-funcionário]"}</p>
-              <p className="text-slate-400 text-sm">{a.reason} — {a.fromDate} {a.toDate ? até ${a.toDate} : ""}</p>
+              <p className="text-slate-400 text-sm">{a.reason} — {a.fromDate} {a.toDate ? `até ${a.toDate}` : ""}</p>
             </div>
             <div className="flex gap-2">
               <button className="px-3 py-1 bg-yellow-600 rounded hover:bg-yellow-500 transition" onClick={()=>onEdit(a)}>Editar</button>
@@ -251,10 +251,10 @@ function CipaReport({ away }) {
   Object.keys(stats).forEach(cid => {
     const cLower = cid.toLowerCase();
     if (cLower.includes("depress") || cLower.includes("f32") || cLower.includes("psic")) {
-      alertas.push(⚠ CID "${cid}": possível problema psicológico. Ação: apoio psicológico/palestra.);
+      alertas.push(`⚠ CID "${cid}": possível problema psicológico. Ação: apoio psicológico/palestra.`);
       rowColors[cid] = "bg-yellow-100 text-yellow-900";
     } else if (cLower.includes("acidente") || cLower.includes("s72") || cLower.includes("trauma")) {
-      alertas.push(⚠ CID "${cid}": acidente de trabalho. Ação: revisar segurança.);
+      alertas.push(`⚠ CID "${cid}": acidente de trabalho. Ação: revisar segurança.`);
       rowColors[cid] = "bg-red-100 text-red-900";
     } else {
       rowColors[cid] = "bg-slate-700 text-slate-100";
@@ -275,7 +275,7 @@ function CipaReport({ away }) {
           </thead>
           <tbody>
             {Object.entries(stats).map(([cid, qtd], i) => (
-              <tr key={i} className={${rowColors[cid] || "bg-slate-700 text-white"} border-b border-slate-600}>
+              <tr key={i} className={`${rowColors[cid] || "bg-slate-700 text-white"} border-b border-slate-600`}>
                 <td className="px-4 py-2">{cid}</td>
                 <td className="px-4 py-2">{qtd}</td>
               </tr>
@@ -302,11 +302,10 @@ function EmployeeModal({ show, onClose, formData, setFormData, onSave }) {
   const [tab, setTab] = useState("dados");
   const modalRef = useRef();
 
-  const handleClickOutside = (e) => {
-    if(modalRef.current && !modalRef.current.contains(e.target)) onClose();
-  };
-
   useEffect(()=> {
+    const handleClickOutside = (e) => {
+      if(modalRef.current && !modalRef.current.contains(e.target)) onClose();
+    };
     document.addEventListener("mousedown", handleClickOutside);
     return ()=> document.removeEventListener("mousedown", handleClickOutside);
   });
@@ -328,8 +327,8 @@ function EmployeeModal({ show, onClose, formData, setFormData, onSave }) {
         <h3 className="text-xl font-bold">{formData.id ? "Editar Funcionário" : "Novo Funcionário"}</h3>
 
         <div className="flex gap-2 mb-4">
-          <button type="button" onClick={()=>setTab("dados")} className={px-3 py-1 rounded ${tab==="dados" ? "bg-cyan-500 text-white" : "bg-slate-700 text-slate-200"}}>Dados</button>
-          <button type="button" onClick={()=>setTab("financeiro")} className={px-3 py-1 rounded ${tab==="financeiro" ? "bg-cyan-500 text-white" : "bg-slate-700 text-slate-200"}}>Financeiro</button>
+          <button type="button" onClick={()=>setTab("dados")} className={`px-3 py-1 rounded ${tab==="dados" ? "bg-cyan-500 text-white" : "bg-slate-700 text-slate-200"}`}>Dados</button>
+          <button type="button" onClick={()=>setTab("financeiro")} className={`px-3 py-1 rounded ${tab==="financeiro" ? "bg-cyan-500 text-white" : "bg-slate-700 text-slate-200"}`}>Financeiro</button>
         </div>
 
         {tab==="dados" && (
@@ -363,11 +362,10 @@ function EmployeeModal({ show, onClose, formData, setFormData, onSave }) {
 function AwayModal({ show, onClose, formData, setFormData, onSave, employees }) {
   const modalRef = useRef();
 
-  const handleClickOutside = (e) => {
-    if(modalRef.current && !modalRef.current.contains(e.target)) onClose();
-  };
-
   useEffect(()=> {
+    const handleClickOutside = (e) => {
+      if(modalRef.current && !modalRef.current.contains(e.target)) onClose();
+    };
     document.addEventListener("mousedown", handleClickOutside);
     return ()=> document.removeEventListener("mousedown", handleClickOutside);
   });
@@ -413,89 +411,60 @@ function AwayModal({ show, onClose, formData, setFormData, onSave, employees }) 
 /* ================== APP ================== */
 function App(){
   const [view, setView] = useState("dashboard");
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [search, setSearch] = useState("");
   const [employees, setEmployees] = useState([]);
   const [away, setAway] = useState([]);
-  const [search, setSearch] = useState("");
-  const [showEmpModal, setShowEmpModal] = useState(false);
+  const [showEmployeeModal, setShowEmployeeModal] = useState(false);
+  const [employeeForm, setEmployeeForm] = useState({});
   const [showAwayModal, setShowAwayModal] = useState(false);
-  const [empForm, setEmpForm] = useState({id:"", name:"", cpf:"", role:"", dept:"", salary:"", adm:"", payroll:"", benefits:""});
-  const [awayForm, setAwayForm] = useState({id:"", empId:"", reason:"", fromDate:"", toDate:""});
-
-  useEffect(()=> {
-    const empLS = localStorage.getItem("employees");
-    if (empLS) setEmployees(JSON.parse(empLS));
-    const awayLS = localStorage.getItem("away");
-    if (awayLS) setAway(JSON.parse(awayLS));
-  }, []);
-
-  useEffect(()=> localStorage.setItem("employees", JSON.stringify(employees)), [employees]);
-  useEffect(()=> localStorage.setItem("away", JSON.stringify(away)), [away]);
+  const [awayForm, setAwayForm] = useState({});
 
   const filteredEmployees = employees.filter(e => e.name.toLowerCase().includes(search.toLowerCase()));
-  const currentAway = away.filter(a => {
-    const now = new Date();
-    const f = new Date(a.fromDate);
-    const t = a.toDate ? new Date(a.toDate) : f;
-    return f <= now && now <= t;
-  });
 
-  /* ======= Funcionario ======= */
-  const handleSaveEmp = e => {
-    e.preventDefault();
-    const newData = {...empForm, salary: parseFloat(empForm.salary) || 0};
-    if (empForm.id) {
-      setEmployees(employees.map(emp => emp.id === empForm.id ? newData : emp));
+  const handleAddEmployee = () => { setEmployeeForm({}); setShowEmployeeModal(true); };
+  const handleSaveEmployee = () => {
+    if(employeeForm.id){
+      setEmployees(employees.map(e => e.id===employeeForm.id ? employeeForm : e));
     } else {
-      setEmployees([...employees, {...newData, id: crypto.randomUUID()}]);
+      setEmployees([...employees, {...employeeForm, id:Date.now()}]);
     }
-    setEmpForm({id:"", name:"", cpf:"", role:"", dept:"", salary:"", adm:"", payroll:"", benefits:""});
-    setShowEmpModal(false);
-    alert("Funcionário salvo com sucesso!");
+    setShowEmployeeModal(false);
   };
-  const handleEditEmp = e => { setEmpForm(e); setShowEmpModal(true); };
-  const handleDeleteEmp = id => { if(confirm("Remover funcionário?")) setEmployees(employees.filter(e=>e.id!==id)); };
-
-  /* ======= Afastamento ======= */
-  const handleAddAway = empId => {
-    setAwayForm({id:"", empId, reason:"", fromDate:new Date().toISOString().slice(0,10), toDate:""});
-    setShowAwayModal(true);
-  };
-  const handleEditAway = a => { setAwayForm(a); setShowAwayModal(true); };
-  const handleSaveAway = e => {
-    e.preventDefault();
-    if (awayForm.id) {
+  const handleEditEmployee = (emp) => { setEmployeeForm(emp); setShowEmployeeModal(true); };
+  const handleDeleteEmployee = (id) => setEmployees(employees.filter(e=>e.id!==id));
+  const handleAwayEmployee = (empId) => { setAwayForm({empId:""+empId}); setShowAwayModal(true); };
+  const handleSaveAway = () => {
+    if(awayForm.id){
       setAway(away.map(a=>a.id===awayForm.id?awayForm:a));
     } else {
-      setAway([...away,{...awayForm,id:crypto.randomUUID()}]);
+      setAway([...away,{...awayForm,id:Date.now()}]);
     }
-    setAwayForm({id:"", empId:"", reason:"", fromDate:"", toDate:""});
     setShowAwayModal(false);
-    alert("Afastamento salvo com sucesso!");
   };
-  const handleRemoveAway = id => setAway(away.filter(a=>a.id!==id));
+  const handleEditAway = (a) => { setAwayForm(a); setShowAwayModal(true); };
+  const handleRemoveAway = (id) => setAway(away.filter(a=>a.id!==id));
+
+  if(!loggedIn) return <Login onLogin={()=>setLoggedIn(true)} />;
 
   return (
-    <div className="flex h-screen">
-      <Sidebar view={view} setView={setView} search={search} setSearch={setSearch} onAdd={()=>setShowEmpModal(true)} employees={employees} away={away}/>
-      <main className="flex-1 p-6 overflow-auto">
-        {view==="dashboard" && <Dashboard employees={employees} currentAway={currentAway}/>}
-        {view==="funcionarios" && <Employees filteredEmployees={filteredEmployees} onEdit={handleEditEmp} onDelete={handleDeleteEmp} onAway={handleAddAway}/>}
-        {view==="ferias" && <AwayList away={away} employees={employees} onRemove={handleRemoveAway} onEdit={handleEditAway}/>}
-        {view==="cipa" && <CipaReport away={away}/>}
+    <div className="flex min-h-screen">
+      <Sidebar view={view} setView={setView} search={search} setSearch={setSearch} onAdd={handleAddEmployee} employees={employees} away={away} />
+
+      <main className="flex-1 p-6 bg-slate-900">
+        {view==="dashboard" && <Dashboard employees={employees} currentAway={away} />}
+        {view==="funcionarios" && <Employees filteredEmployees={filteredEmployees} onEdit={handleEditEmployee} onDelete={handleDeleteEmployee} onAway={handleAwayEmployee} />}
+        {view==="ferias" && <AwayList away={away} employees={employees} onRemove={handleRemoveAway} onEdit={handleEditAway} />}
+        {view==="cipa" && <CipaReport away={away} />}
+
+        <EmployeeModal show={showEmployeeModal} onClose={()=>setShowEmployeeModal(false)} formData={employeeForm} setFormData={setEmployeeForm} onSave={handleSaveEmployee} />
+        <AwayModal show={showAwayModal} onClose={()=>setShowAwayModal(false)} formData={awayForm} setFormData={setAwayForm} onSave={handleSaveAway} employees={employees} />
       </main>
-      <EmployeeModal show={showEmpModal} onClose={()=>setShowEmpModal(false)} formData={empForm} setFormData={setEmpForm} onSave={handleSaveEmp}/>
-      <AwayModal show={showAwayModal} onClose={()=>setShowAwayModal(false)} formData={awayForm} setFormData={setAwayForm} onSave={handleSaveAway} employees={employees}/>
     </div>
   );
 }
 
-/* ================== Root com Login ================== */
-function Root(){
-  const [logged, setLogged] = useState(false);
-  return logged ? <App/> : <Login onLogin={()=>setLogged(true)}/>;
-}
-
-ReactDOM.createRoot(document.getElementById("root")).render(<Root/>);
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 </body>
 </html>
